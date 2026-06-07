@@ -1,0 +1,2275 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuntosaliohjelma</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f5f8ff;
+            --surface: #ffffff;
+            --surface2: #eff6ff;
+            --accent: #1e40af;
+            --accent2: #3b82f6;
+            --light-blue: #dbeafe;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --border-blue: #bfdbfe;
+            --success: #059669;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Header ── */
+        header {
+            background: #ffffff;
+            border-bottom: 1px solid var(--border);
+            padding: 1.5rem 2rem 1.25rem;
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.25rem;
+        }
+
+        .header-top h1 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 2rem;
+            font-weight: 400;
+            color: var(--text);
+            letter-spacing: -0.5px;
+            flex: 1;
+            text-align: center;
+        }
+
+        .header-auth-slot { width: 160px; display: flex; justify-content: flex-end; }
+
+        .auth-btn {
+            background: transparent;
+            color: var(--text);
+            border: 1.5px solid var(--border);
+            border-radius: 999px;
+            padding: 0.5rem 1.25rem;
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-weight: 600;
+            font-family: 'DM Sans', sans-serif;
+            transition: all 0.2s;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .auth-btn:hover { background: var(--text); color: white; border-color: var(--text); }
+
+        .user-info { display: flex; flex-direction: column; align-items: flex-end; gap: 0.2rem; }
+        .username-badge { color: var(--text); font-size: 0.85rem; font-weight: 600; }
+        .logout-btn {
+            background: transparent;
+            color: var(--text-muted);
+            border: none;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-family: 'DM Sans', sans-serif;
+            text-decoration: underline;
+            padding: 0;
+        }
+        .logout-btn:hover { color: var(--text); }
+
+        /* ── Step indicator ── */
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+        }
+
+        .step-dot {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            background: white;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            transition: all 0.25s;
+        }
+
+        .step-dot.active { background: var(--accent); border-color: var(--accent); color: white; }
+        .step-dot.done { background: var(--light-blue); border-color: var(--border-blue); color: var(--accent); }
+
+        .step-line {
+            width: 60px;
+            height: 2px;
+            background: var(--border);
+            transition: background 0.25s;
+        }
+
+        .step-line.done { background: var(--border-blue); }
+
+        .step-label-row {
+            display: flex;
+            justify-content: center;
+            gap: 0;
+            margin-top: 0.4rem;
+        }
+
+        .step-label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            width: 32px;
+            text-align: center;
+        }
+
+        .step-label.active { color: var(--accent); }
+        .step-label-gap { width: 60px; }
+
+        /* ── Day nav ── */
+        .day-nav {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1.25rem 1rem 1rem;
+        }
+
+        .day-nav-btns { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; }
+
+
+        .day-btn {
+            background: white;
+            color: var(--text-muted);
+            border: 1.5px solid var(--border);
+            border-radius: 12px;
+            padding: 0.65rem 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+            font-weight: 500;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .day-btn:hover { border-color: var(--accent2); color: var(--accent); }
+        .day-btn.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+            box-shadow: 0 4px 14px rgba(30,64,175,0.22);
+        }
+
+        /* ── Main ── */
+        main { max-width: 760px; margin: 0 auto; padding: 0 1.25rem 4rem; }
+
+        /* ── Wizard step views ── */
+        .step-view { padding-top: 2.5rem; }
+
+        .step-title {
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.75rem;
+            font-weight: 400;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .step-subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 2rem;
+        }
+
+        /* ── Program cards carousel ── */
+        .program-slider-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .program-track {
+            flex: 1;
+            display: flex;
+            gap: 1rem;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+            padding: 10px 4px;
+            margin: -10px -4px;
+        }
+
+        .program-card {
+            flex: 0 0 calc(25% - 12px);
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: 20px;
+            padding: 1.5rem 1rem 1.25rem;
+            cursor: pointer;
+            transition: all 0.22s ease;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .program-card:hover {
+            border-color: var(--border-blue);
+            background: var(--surface2);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 32px rgba(30,64,175,0.1);
+        }
+
+.program-card-name {
+            font-family: 'DM Serif Display', serif;
+            font-size: 1rem;
+            font-weight: 400;
+            margin-bottom: 0.4rem;
+            color: var(--text);
+            line-height: 1.35;
+        }
+
+        .program-card-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .carousel-arrow {
+            flex-shrink: 0;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: white;
+            border: 1.5px solid var(--border);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            transition: all 0.2s;
+            font-family: 'DM Sans', sans-serif;
+            line-height: 1;
+        }
+
+        .carousel-arrow:hover { border-color: var(--accent2); color: var(--accent); }
+
+        /* ── Split cards ── */
+        .split-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .split-card {
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: 20px;
+            padding: 1.75rem 1.25rem;
+            cursor: pointer;
+            transition: all 0.22s ease;
+            text-align: center;
+        }
+
+        .split-card:hover {
+            border-color: var(--border-blue);
+            background: var(--surface2);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 32px rgba(30,64,175,0.1);
+        }
+
+        .split-card-number {
+            font-family: 'DM Serif Display', serif;
+            font-size: 2.5rem;
+            font-weight: 400;
+            color: var(--accent);
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .split-card-name {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 0.35rem;
+            letter-spacing: 0.02em;
+        }
+
+        .split-card-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .split-card.selected {
+            border-color: var(--accent);
+            background: #eff6ff;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 32px rgba(30,64,175,0.12);
+        }
+
+        /* ── Home page ── */
+        .home-section-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin: 1.5rem 0 0.75rem;
+        }
+
+        .home-create-card {
+            flex: 0 0 calc(25% - 12px);
+            background: var(--surface);
+            border: 2px dashed var(--border-blue);
+            border-radius: 20px;
+            padding: 1.5rem 1rem 1.25rem;
+            cursor: pointer;
+            transition: all 0.22s ease;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 130px;
+        }
+
+        .home-create-card:hover {
+            background: #eff6ff;
+            border-color: var(--accent);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 32px rgba(30,64,175,0.1);
+        }
+
+        .home-create-icon {
+            font-size: 2rem;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+            color: var(--accent);
+            font-weight: 300;
+        }
+
+        .home-create-label {
+            font-family: 'DM Serif Display', serif;
+            font-size: 0.95rem;
+            line-height: 1.35;
+            color: var(--accent);
+        }
+
+        .home-saved-card { position: relative; }
+
+        .home-saved-delete {
+            position: absolute;
+            top: 0.55rem;
+            right: 0.55rem;
+            width: 22px; height: 22px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            line-height: 1;
+            transition: all 0.15s;
+        }
+
+        .home-saved-delete:hover { background: #fee2e2; color: #dc2626; }
+
+        /* ── Back button ── */
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: transparent;
+            color: var(--text-muted);
+            border: 1.5px solid var(--border);
+            border-radius: 999px;
+            padding: 0.45rem 1rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            font-family: 'DM Sans', sans-serif;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            margin-bottom: 2rem;
+        }
+
+        .back-btn:hover { border-color: var(--accent2); color: var(--accent); }
+
+        /* ── Breadcrumb ── */
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        .breadcrumb-item { font-weight: 600; }
+        .breadcrumb-item.active { color: var(--accent); }
+        .breadcrumb-sep { opacity: 0.4; }
+
+        /* ── Day header ── */
+        .day-header { text-align: center; margin-bottom: 1.5rem; }
+
+        .day-header h2 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.85rem;
+            font-weight: 400;
+            margin-bottom: 0.4rem;
+            color: var(--text);
+        }
+
+        .day-header p {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+
+        /* ── Login prompt ── */
+        .login-prompt {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1rem;
+            background: var(--surface2);
+            border: 1.5px dashed var(--border-blue);
+            border-radius: 14px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 1.25rem;
+        }
+
+        .login-prompt button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 999px;
+            padding: 0.35rem 1rem;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        /* ── Progress ── */
+        .day-progress {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.75rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            border: 1.5px solid var(--border);
+        }
+
+        .progress-bar { flex: 1; height: 5px; background: var(--light-blue); border-radius: 999px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--accent2); border-radius: 999px; transition: width 0.4s ease; }
+        .progress-text { font-size: 0.8rem; color: var(--text-muted); white-space: nowrap; font-weight: 500; }
+
+        /* ── Exercise carousel ── */
+        .exercise-carousel { overflow: hidden; touch-action: pan-y; }
+        .exercise-track { display: flex; transition: transform 0.28s cubic-bezier(0.25,0.46,0.45,0.94); }
+        .exercise-slide { flex: 0 0 100%; min-width: 0; }
+
+        .ex-nav-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 0 0.75rem;
+        }
+
+        .ex-nav-btn {
+            width: 44px; height: 44px;
+            border: 1.5px solid var(--border);
+            background: var(--surface);
+            border-radius: 50%;
+            font-size: 1.5rem;
+            line-height: 1;
+            cursor: pointer;
+            color: var(--accent);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            transition: opacity 0.2s, border-color 0.2s;
+        }
+        .ex-nav-btn:disabled { opacity: 0.22; cursor: default; }
+
+        .ex-indicator { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; letter-spacing: 0.01em; min-height: 1.1em; padding-bottom: 0.25rem; }
+        .ex-indicator strong { color: var(--accent); font-weight: 700; }
+
+        .ex-dots { display: flex; gap: 6px; align-items: center; justify-content: center; flex-wrap: wrap; flex: 1; }
+        .ex-dot {
+            width: 9px; height: 9px; border-radius: 50%;
+            background: var(--border);
+            transition: background 0.2s, transform 0.2s;
+            cursor: pointer;
+        }
+        .ex-dot.active { background: var(--accent); transform: scale(1.4); }
+        .ex-dot.done { background: #10b981; }
+
+        .exercise-slide-card {
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: 20px;
+            padding: 1.5rem 1.25rem 1.25rem;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .exercise-slide-card.completed { border-color: #a7f3d0; background: #f0fdf4; }
+
+        .exercise-slide-counter {
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .exercise-slide-name {
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.45rem;
+            color: var(--text);
+            margin-bottom: 0.75rem;
+            line-height: 1.25;
+        }
+
+        .exercise-meta { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+
+        .badge {
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            background: var(--bg);
+            color: var(--text-muted);
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .badge.primary { background: var(--light-blue); color: var(--accent); }
+        .badge.tauko { background: #fef3c7; color: #92400e; font-weight: 700; }
+
+        .complete-toggle {
+            width: 100%;
+            padding: 0.9rem;
+            border-radius: 14px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 1.25rem;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+            font-family: 'DM Sans', sans-serif;
+            letter-spacing: 0.04em;
+        }
+        .complete-toggle.todo { background: var(--bg); border-color: var(--border); color: var(--text-muted); }
+        .complete-toggle.done { background: #10b981; color: white; border-color: #10b981; }
+
+        /* ── Sets table ── */
+        .sets-table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; font-size: 0.875rem; }
+
+        .sets-table th {
+            text-align: left;
+            padding: 0.5rem 0.75rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+        }
+
+        .sets-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #f8fafc; color: var(--text); }
+
+        /* ── Set inputs ── */
+        .set-input {
+            width: 72px;
+            padding: 0.45rem 0.5rem;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            color: var(--text);
+            background: var(--bg);
+            text-align: center;
+            outline: none;
+            transition: all 0.2s;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .set-input:focus {
+            border-color: var(--accent2);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        }
+
+        .prev-col-header {
+            color: var(--text-muted);
+            font-size: 0.65rem;
+            text-align: center;
+        }
+        .prev-col {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        /* ── Instructions ── */
+        .instructions-details {
+            margin-top: 1.25rem;
+            background: var(--surface2);
+            border-radius: 12px;
+            border: 1px solid var(--border-blue);
+            overflow: hidden;
+        }
+        .instructions-details summary {
+            padding: 0.75rem 1rem;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            cursor: pointer;
+            user-select: none;
+            list-style: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .instructions-details summary::after { content: '▼'; font-size: 0.6rem; }
+        .instructions-details[open] summary::after { content: '▲'; }
+        .instructions-details ol {
+            padding: 0 1rem 0.75rem 2rem;
+            margin: 0;
+            font-size: 0.83rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+        .instructions-details li + li { margin-top: 0.2rem; }
+
+        /* ── Save button ── */
+        .workout-actions {
+            margin-top: 1.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+
+        .save-workout-btn {
+            width: 100%;
+            padding: 1rem;
+            background: var(--text);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s;
+            font-family: 'DM Sans', sans-serif;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .save-workout-btn:hover {
+            background: var(--accent);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(30,64,175,0.25);
+        }
+
+        .save-workout-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .save-log-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: transparent;
+            color: var(--text-muted);
+            border: 1.5px solid var(--border);
+            border-radius: 12px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'DM Sans', sans-serif;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+        }
+
+        .save-log-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .save-log-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .success-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15,23,42,0.5);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            backdrop-filter: blur(6px);
+        }
+
+        .success-overlay.open { display: flex; }
+
+        .success-modal {
+            background: white;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 360px;
+            padding: 2.5rem 2rem 2rem;
+            text-align: center;
+            box-shadow: 0 24px 64px rgba(15,23,42,0.18);
+        }
+
+        .success-icon {
+            width: 64px;
+            height: 64px;
+            background: #d1fae5;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.25rem;
+            font-size: 1.75rem;
+            color: #059669;
+            font-weight: 700;
+        }
+
+        .success-title {
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.65rem;
+            color: var(--text);
+            margin-bottom: 0.4rem;
+            font-weight: 400;
+        }
+
+        .success-subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 1.75rem;
+        }
+
+        .success-close-btn {
+            width: 100%;
+            padding: 0.95rem;
+            background: #059669;
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            transition: background 0.2s;
+        }
+
+        .success-close-btn:hover { background: #047857; }
+
+        /* ── Modal ── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15,23,42,0.45);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            backdrop-filter: blur(6px);
+        }
+
+        .modal-overlay.open { display: flex; }
+
+        .modal {
+            background: white;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 400px;
+            overflow: hidden;
+            box-shadow: 0 24px 64px rgba(15,23,42,0.15);
+        }
+
+        .modal-header {
+            background: var(--bg);
+            padding: 2rem 1.5rem 1.5rem;
+            text-align: center;
+            position: relative;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-header h2 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.5rem;
+            font-weight: 400;
+            color: var(--text);
+            margin-bottom: 1rem;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1.25rem;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.35rem;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .modal-close:hover { color: var(--text); }
+
+        .modal-tabs { display: flex; gap: 0.4rem; justify-content: center; }
+
+        .modal-tab {
+            background: white;
+            color: var(--text-muted);
+            border: 1.5px solid var(--border);
+            border-radius: 999px;
+            padding: 0.4rem 1.25rem;
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            transition: all 0.2s;
+        }
+
+        .modal-tab.active { background: var(--text); color: white; border-color: var(--text); }
+
+        .modal-body { padding: 1.5rem; }
+
+        .form-group { margin-bottom: 1rem; }
+
+        .form-group label {
+            display: block;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 0.4rem;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1.5px solid var(--border);
+            border-radius: 12px;
+            font-size: 0.95rem;
+            color: var(--text);
+            background: var(--bg);
+            outline: none;
+            transition: all 0.2s;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .form-input:focus {
+            border-color: var(--accent2);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        }
+
+        .modal-submit {
+            width: 100%;
+            padding: 0.875rem;
+            background: var(--text);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 0.5rem;
+            transition: all 0.2s;
+            font-family: 'DM Sans', sans-serif;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .modal-submit:hover { background: var(--accent); }
+        .modal-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .modal-error {
+            color: #dc2626;
+            font-size: 0.85rem;
+            margin-bottom: 0.75rem;
+            text-align: center;
+            display: none;
+        }
+
+        .modal-error.show { display: block; }
+
+        /* ── Toast ── */
+        .toast {
+            position: fixed;
+            bottom: 1.5rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: var(--text);
+            color: white;
+            padding: 0.7rem 1.5rem;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            font-family: 'DM Sans', sans-serif;
+            z-index: 200;
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 20px rgba(15,23,42,0.18);
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast.success { background: #059669; }
+        .toast.error { background: #dc2626; }
+
+        @media (max-width: 600px) {
+            header { padding: 1.25rem 1rem 1rem; }
+            .header-top h1 { font-size: 1.5rem; }
+            .program-card { flex: 0 0 calc(50% - 8px); }
+            .split-grid { grid-template-columns: 1fr; }
+            .step-line { width: 36px; }
+            .step-label-gap { width: 36px; }
+            .header-auth-slot { width: auto; }
+            .day-btn { padding: 0.55rem 0.9rem; font-size: 0.8rem; }
+            .sets-table th, .sets-table td { padding: 0.6rem 0.5rem; }
+            .exercise-slide-name { font-size: 1.25rem; }
+            .day-header h2 { font-size: 1.4rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Success Modal -->
+<div class="success-overlay" id="success-overlay" onclick="closeSuccessOutside(event)">
+    <div class="success-modal">
+        <div class="success-icon">✓</div>
+        <div class="success-title" id="success-title">Hienoa!</div>
+        <div class="success-subtitle" id="success-subtitle">Treeni on tallennettu.</div>
+        <button class="success-close-btn" onclick="closeSuccessOverlay()">Sulje</button>
+    </div>
+</div>
+
+<!-- Auth Modal -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalOutside(event)">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>Kuntosaliohjelma</h2>
+            <div class="modal-tabs">
+                <button class="modal-tab active" onclick="switchTab('login')">Kirjaudu</button>
+                <button class="modal-tab" onclick="switchTab('register')">Rekisteröidy</button>
+            </div>
+            <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <div id="modal-error" class="modal-error"></div>
+            <div class="form-group">
+                <label>Käyttäjänimi</label>
+                <input type="text" class="form-input" id="auth-username" autocomplete="username"
+                    onkeydown="if(event.key==='Enter') document.getElementById('auth-password').focus()">
+            </div>
+            <div class="form-group">
+                <label>Salasana</label>
+                <input type="password" class="form-input" id="auth-password" autocomplete="current-password"
+                    onkeydown="if(event.key==='Enter') submitAuth()">
+            </div>
+            <button type="button" class="modal-submit" id="modal-submit-btn" onclick="submitAuth()">
+                Kirjaudu sisään
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<header>
+    <div class="header-top">
+        <div style="width:160px"></div>
+        <h1>Kuntosaliohjelma</h1>
+        <div class="header-auth-slot" id="header-auth">
+            <button class="auth-btn" onclick="openModal()">Kirjaudu sisään</button>
+        </div>
+    </div>
+    <div class="step-indicator" id="step-indicator">
+        <div class="step-dot active" id="dot-1">1</div>
+        <div class="step-line" id="line-1"></div>
+        <div class="step-dot" id="dot-2">2</div>
+        <div class="step-line" id="line-2"></div>
+        <div class="step-dot" id="dot-3">3</div>
+    </div>
+    <div class="step-label-row" id="step-label-row">
+        <div class="step-label active" id="label-1">Ohjelma</div>
+        <div class="step-label-gap"></div>
+        <div class="step-label" id="label-2">Jako</div>
+        <div class="step-label-gap"></div>
+        <div class="step-label" id="label-3">Treeni</div>
+    </div>
+</header>
+
+<nav class="day-nav" id="day-nav" style="display:none"></nav>
+<main id="main-content"></main>
+
+<script>
+// ── Exercise library ──────────────────────────────────────────────────────────
+
+const E = {
+
+    // ── Alakroppa — vapaat painot ──────────────────────────────────────────────
+
+    takakyykkyA: { name:'Takakyykky (tanko)', muscles:'Jalat, Pakarat, Alaselkä', tauko:180,
+        sets:[{sarja:1,toistot:'6–8',paino:'Valitse paino'},{sarja:2,toistot:'6–8',paino:'Sama / lisää painoa'},{sarja:3,toistot:'6–8',paino:'Sama / lisää painoa'},{sarja:4,toistot:'6–8',paino:'Lisää painoa'}],
+        instructions:['Aseta tanko yläselän päälle, hartialevyinen jalka-asento.','Varpaat hieman ulospäin.','Laskeudu kyykkyyn kunnes reidet tulevat vaakatasolle tai alle.','Pidä selkä suorana ja katse eteenpäin.','Nouse ylös suoristamalla jalat.'] },
+
+    maljakyykky: { name:'Maljakyykky (käsipainolla)', muscles:'Etureidet, Pakarat', tauko:90,
+        sets:[{sarja:1,toistot:'8–10',paino:'Valitse paino'},{sarja:2,toistot:'8–10',paino:'Sama / lisää painoa'},{sarja:3,toistot:'8–10',paino:'Sama / lisää painoa'},{sarja:4,toistot:'8–10',paino:'Sama / lisää painoa'}],
+        instructions:['Pidä käsipainoa molemmin käsin rinnan edessä pystyasennossa.','Jalat hartialevyisessä asennossa, varpaat hieman ulospäin.','Laskeudu kyykkyyn pitäen selkä suorana ja rintakehä auki.','Nouse ylös jaloilla suoristaen, aktivoi pakarat yläasennossa.'] },
+
+    askelkyykkyTaakse: { name:'Askelkyykky taaksepäin (tanko)', muscles:'Pakarat, Etureidet', tauko:90,
+        sets:[{sarja:1,toistot:'8 / jalka',paino:'Valitse paino'},{sarja:2,toistot:'8 / jalka',paino:'Sama / lisää painoa'},{sarja:3,toistot:'8 / jalka',paino:'Sama / lisää painoa'}],
+        instructions:['Aseta tanko yläselän päälle, seiso suorana.','Ota pitkä askel taaksepäin ja laske polvi lähes lattiaan.','Etupolvessa 90° kulma, polvi ei ylitä varpaita.','Nouse takaisin suoraksi etujalan voimalla.','Vaihda jalkaa vuorotellen.'] },
+
+    lantionnosto: { name:'Lantionnosto (tanko)', muscles:'Pakarat, Takareidet', tauko:90,
+        sets:[{sarja:1,toistot:'8–10',paino:'Valitse paino'},{sarja:2,toistot:'8–10',paino:'Sama / lisää painoa'},{sarja:3,toistot:'8–10',paino:'Sama / lisää painoa'},{sarja:4,toistot:'8–10',paino:'Sama / lisää painoa'}],
+        instructions:['Istu lattialle ja nojaa yläselkä penkin reunaan.','Aseta tanko lonkkien päälle pehmusteen kanssa.','Jalat lattialla, polvet n. 90° kulmassa.','Nosta lantio ylös puristamalla pakarat yhteen.','Pidä yläasento hetki ja laske hallitusti alas.'] },
+
+    yhdenJalanMd: { name:'Yhden jalan maastaveto', muscles:'Takareidet, Pakarat', tauko:75,
+        sets:[{sarja:1,toistot:'8–10 / jalka',paino:'Valitse paino'},{sarja:2,toistot:'8–10 / jalka',paino:'Sama / lisää painoa'},{sarja:3,toistot:'8–10 / jalka',paino:'Sama / lisää painoa'}],
+        instructions:['Seiso yhdellä jalalla, käsipainot tai tanko käsissä.','Kumarra eteenpäin lonkasta pitäen selkä suorana.','Takajalka nousee suoraan taaksepäin tasapainoksi.','Tunne venytys tukijalan takaosassa.','Nouse takaisin suoraksi aktivoimalla pakarat.'] },
+
+    bulgarialainenAskelkyykky: { name:'Bulgarialainen askelkyykky', muscles:'Pakarat, Etureidet', tauko:75,
+        sets:[{sarja:1,toistot:'8–10 / jalka',paino:'Valitse paino'},{sarja:2,toistot:'8–10 / jalka',paino:'Sama / lisää painoa'},{sarja:3,toistot:'8–10 / jalka',paino:'Sama / lisää painoa'}],
+        instructions:['Aseta takajalka penkin tai alustan päälle.','Pidä etujalka riittävän kaukana, polvi ei ylitä varpaita.','Laske alas hallitusti kunnes etupolvi on 90° kulmassa.','Nouse ylös etujalan voimalla, purista pakara yläasennossa.','Tee kaikki sarjat yhdellä jalalla ennen vaihtoa.'] },
+
+    gluteStepUp: { name:'Glute step up käsipainolla', muscles:'Pakarat, Etureidet', tauko:75,
+        sets:[{sarja:1,toistot:'10–12 / jalka',paino:'Valitse paino'},{sarja:2,toistot:'10–12 / jalka',paino:'Sama / lisää painoa'},{sarja:3,toistot:'10–12 / jalka',paino:'Sama / lisää painoa'}],
+        instructions:['Seiso korkean alustan (40–60 cm) edessä, käsipainot käsissä.','Aseta etujalka alustalle kokonaan.','Nouse ylös etujalalla suoristamalla polvi — älä käytä takajalalla vauhtia.','Laske hallitusti takaisin alas.'] },
+
+    polvenKoukistus3: { name:'Polven koukistus laitteessa', muscles:'Takareidet', tauko:75,
+        sets:[{sarja:1,toistot:'10–12',paino:'Valitse paino'},{sarja:2,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:3,toistot:'10–12',paino:'Sama / lisää painoa'}],
+        instructions:['Asetu polven koukistus -koneeseen maaten tai istuen.','Koukista jalat hallitusti pakaroita kohti.','Pidä yläasento hetken.','Laske hallitusti takaisin suoriksi.'] },
+
+    polvenKoukistus4: { name:'Polven koukistus laitteessa', muscles:'Takareidet', tauko:75,
+        sets:[{sarja:1,toistot:'8–10',paino:'Valitse paino'},{sarja:2,toistot:'8–10',paino:'Sama / lisää painoa'},{sarja:3,toistot:'8–10',paino:'Sama / lisää painoa'},{sarja:4,toistot:'8–10',paino:'Sama / lisää painoa'}],
+        instructions:['Asetu polven koukistus -koneeseen maaten tai istuen.','Koukista jalat hallitusti pakaroita kohti.','Pidä yläasento hetken.','Laske hallitusti takaisin suoriksi.'] },
+
+    polvenOjennus3: { name:'Polven ojennus laitteessa', muscles:'Etureidet', tauko:75,
+        sets:[{sarja:1,toistot:'12–15',paino:'Valitse paino'},{sarja:2,toistot:'12–15',paino:'Sama / lisää painoa'},{sarja:3,toistot:'12–15',paino:'Sama / lisää painoa'}],
+        instructions:['Istu polven ojennus -koneessa, jalat tyynyjen alla.','Ojenna jalat suoriksi hallitusti.','Pidä yläasento hetken.','Laske hallitusti takaisin n. 90° kulmaan.'] },
+
+    pohjenostotSeisten: { name:'Pohjenostot seisten', muscles:'Pohkeet', tauko:45,
+        sets:[{sarja:1,toistot:'10–12',paino:'Oma paino / lisäpaino'},{sarja:2,toistot:'10–12',paino:'Sama'},{sarja:3,toistot:'10–12',paino:'Sama'}],
+        instructions:['Seiso portaan reunalla tai tasaisella alustalla.','Nouse varpaiden päälle mahdollisimman korkealle.','Pidä yläasento hetken.','Laske hallitusti alas — kantapäät voivat laskea alustaa alemmas.'] },
+
+    // ── Ylakroppa — vapaat painot ──────────────────────────────────────────────
+
+    penkkipunnerrusTanko: { name:'Penkkipunnerrus (tanko)', muscles:'Rintakehä, Ojentajalihas, Etuhartia', tauko:90,
+        sets:[{sarja:1,toistot:'6–8',paino:'Valitse paino'},{sarja:2,toistot:'6–8',paino:'Sama / lisää painoa'},{sarja:3,toistot:'6–8',paino:'Sama / lisää painoa'},{sarja:4,toistot:'6–8',paino:'Sama / lisää painoa'}],
+        instructions:['Aseta selkä penkkiin ja tartu tankoon hieman hartioita leveämmältä.','Laske tanko hallitusti rintaan asti.','Paina tanko ylös ja ojenna käsivarret lähes suoriksi.','Pidä kyynärpäät n. 45° kulmassa vartalosta.','Hengitä sisään laskiessa, ulos nostaessa.'] },
+
+    pystypunnerrusTankoSeisten: { name:'Pystypunnerrus tangolla (seisten)', muscles:'Hartiat, Ojentajalihas', tauko:90,
+        sets:[{sarja:1,toistot:'6–8',paino:'Valitse paino'},{sarja:2,toistot:'6–8',paino:'Sama / lisää painoa'},{sarja:3,toistot:'6–8',paino:'Sama / lisää painoa'},{sarja:4,toistot:'6–8',paino:'Sama / lisää painoa'}],
+        instructions:['Seiso selkä suorana, tanko rinnan päällä hartian tasolla.','Punnerra tanko suoraan ylös pään yli.','Ojenna käsivarret lähes suoriksi yläasennossa.','Laske hallitusti takaisin lähtöasentoon.'] },
+
+    vaakasoutu: { name:'Vaakasoutu (tanko)', muscles:'Selkä, Hauis, Takaolkapää', tauko:90,
+        sets:[{sarja:1,toistot:'8–10',paino:'Valitse paino'},{sarja:2,toistot:'8–10',paino:'Sama / lisää painoa'},{sarja:3,toistot:'8–10',paino:'Sama / lisää painoa'},{sarja:4,toistot:'8–10',paino:'Sama / lisää painoa'}],
+        instructions:['Seiso hartialevyisessä asennossa, kumarra eteenpäin n. 45°.','Pidä selkä suorana ja polvet hieman koukussa.','Vedä tanko navanseutuun, kyynärpäät lähellä vartaloa.','Purista lapaluita yhteen yläasennossa.','Laske hallitusti alas.'] },
+
+    leuanvetoA: { name:'Leuanveto', muscles:'Leveä selkälihas, Hauis', tauko:90,
+        sets:[{sarja:1,toistot:'4–6',paino:'Oma kehonpaino'},{sarja:2,toistot:'4–6',paino:'Oma keho / lisäpaino'},{sarja:3,toistot:'4–6',paino:'Oma keho / lisäpaino'},{sarja:4,toistot:'Maks',paino:'Oma kehonpaino'}],
+        instructions:['Tartu tankoon leveydeltä hartioita leveämmältä, kämmenet eteenpäin.','Riippu käsivarret lähes suorina.','Vedä itsesi ylös niin, että leuka ylittää tangon.','Pidä rintakehä auki ja vedä lapaluita yhteen.','Laske hallitusti alas.'] },
+
+    leuanvetoB: { name:'Leuanveto', muscles:'Leveä selkälihas, Hauis', tauko:90,
+        sets:[{sarja:1,toistot:'6–8',paino:'Oma kehonpaino'},{sarja:2,toistot:'6–8',paino:'Oma keho / lisäpaino'},{sarja:3,toistot:'6–8',paino:'Oma keho / lisäpaino'},{sarja:4,toistot:'6–8',paino:'Oma keho / lisäpaino'}],
+        instructions:['Tartu tankoon leveydeltä hartioita leveämmältä, kämmenet eteenpäin.','Riippu käsivarret lähes suorina.','Vedä itsesi ylös niin, että leuka ylittää tangon.','Pidä rintakehä auki ja vedä lapaluita yhteen.','Laske hallitusti alas.'] },
+
+    vinopenkkipunnerrus: { name:'Vinopenkkipunnerrus (käsipainot)', muscles:'Ylärintakehä, Etuhartia', tauko:75,
+        sets:[{sarja:1,toistot:'6–8',paino:'Valitse paino'},{sarja:2,toistot:'6–8',paino:'Sama / lisää painoa'},{sarja:3,toistot:'6–8',paino:'Sama / lisää painoa'}],
+        instructions:['Aseta penkki 30–45° kulmaan.','Pidä selkä penkkiä vasten koko suorituksen ajan.','Laske käsipainot rintakehän yläosaan.','Paina ylös ja tuo käsipainot kevyesti yhteen yläasennossa.'] },
+
+    kulmasoutuYhdella: { name:'Kulmasoutu yhdellä kädellä', muscles:'Selkä, Hauis', tauko:75,
+        sets:[{sarja:1,toistot:'8–10 / käsi',paino:'Valitse paino'},{sarja:2,toistot:'8–10 / käsi',paino:'Sama / lisää painoa'},{sarja:3,toistot:'8–10 / käsi',paino:'Sama / lisää painoa'}],
+        instructions:['Nojaa toisella kädellä ja polvella penkkiin, selkä vaakatasossa.','Vedä käsipainoa kyljelle pitäen kyynärpää lähellä vartaloa.','Purista lapaluu yhteen yläasennossa.','Laske hallitusti alas.'] },
+
+    sivunostoKaapeli: { name:'Sivunosto kaapelilla', muscles:'Sivuhartia', tauko:45,
+        sets:[{sarja:1,toistot:'10–12',paino:'Kevyt paino'},{sarja:2,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:3,toistot:'10–12',paino:'Sama / lisää painoa'}],
+        instructions:['Seiso kaapelilaitteen vieressä, ota yksikahva alhaalta.','Nosta käsi sivulle olkapään tasolle.','Pidä kyynärpää hieman koukussa koko ajan.','Laske hallitusti alas.'] },
+
+    facepull: { name:'Facepull köydellä taljassa', muscles:'Takaolkapää, Kiertäjäkalvosin', tauko:45,
+        sets:[{sarja:1,toistot:'10–12',paino:'Kevyt paino'},{sarja:2,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:3,toistot:'10–12',paino:'Sama / lisää painoa'}],
+        instructions:['Aseta kaapelilaite silmien tai pään korkeudelle, käytä narua.','Vedä narua kasvoille päin niin, että kädet tulevat korvien tasalle.','Purista lapaluita yhteen ja pidä hetki.','Laske hallitusti takaisin.'] },
+
+    hauiskaantoA: { name:'Hauiskääntö (käsipainot)', muscles:'Hauis', tauko:60,
+        sets:[{sarja:1,toistot:'10–12',paino:'Valitse paino'},{sarja:2,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:3,toistot:'10–12',paino:'Sama / lisää painoa'}],
+        instructions:['Seiso tai istu selkä suorana, käsipainot käsissä.','Pidä kyynärpäät kiinni vartalossa koko ajan.','Koukista käsivarret ylöspäin, kämmenet ylöspäin.','Laske hallitusti alas suoriksi.'] },
+
+    ojentajaPaanTakaa: { name:'Ojentajapunnerrus pään takaa', muscles:'Ojentajalihas', tauko:60,
+        sets:[{sarja:1,toistot:'10–12',paino:'Valitse paino'},{sarja:2,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:3,toistot:'10–12',paino:'Sama / lisää painoa'}],
+        instructions:['Pidä käsipainoa tai EZ-tankoa molemmin käsin pään takana.','Pidä kyynärpäät paikallaan osoittaen ylöspäin.','Ojenna käsivarret suoriksi yläasennossa.','Laske hallitusti takaisin pään taakse.'] },
+
+    ojentajaMaaten: { name:'Ojentajapunnerrus maaten', muscles:'Ojentajalihas', tauko:60,
+        sets:[{sarja:1,toistot:'8–10',paino:'Valitse paino'},{sarja:2,toistot:'8–10',paino:'Sama / lisää painoa'},{sarja:3,toistot:'8–10',paino:'Sama / lisää painoa'},{sarja:4,toistot:'8–10',paino:'Sama / lisää painoa'}],
+        instructions:['Makaa penkillä, tanko tai käsipainot ojennettuna suoraan ylös.','Pidä kyynärpäät paikallaan ja taivuta käsivarret niin, että paino laskee otsaan asti.','Ojenna käsivarret takaisin suoriksi.'] },
+
+    // ── Kokovartalo ─────────────────────────────────────────────────────────────
+
+    takakyykkyKoko: { name:'Takakyykky (tanko)', muscles:'Jalat, Pakarat, Alaselkä', tauko:120,
+        sets:[{sarja:1,toistot:'8–10',paino:'Valitse paino'},{sarja:2,toistot:'8–10',paino:'Sama / lisää painoa'},{sarja:3,toistot:'8–10',paino:'Sama / lisää painoa'},{sarja:4,toistot:'8–10',paino:'Sama / lisää painoa'}],
+        instructions:['Aseta tanko yläselän päälle, hartialevyinen jalka-asento.','Varpaat hieman ulospäin.','Laskeudu kyykkyyn kunnes reidet tulevat vaakatasolle tai alle.','Nouse ylös suoristamalla jalat.'] },
+
+    lantionnostoKoko: { name:'Lantionnosto (tanko)', muscles:'Pakarat, Takareidet', tauko:75,
+        sets:[{sarja:1,toistot:'10–12',paino:'Valitse paino'},{sarja:2,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:3,toistot:'10–12',paino:'Sama / lisää painoa'}],
+        instructions:['Istu lattialle ja nojaa yläselkä penkin reunaan.','Aseta tanko lonkkien päälle pehmusteen kanssa.','Nosta lantio ylös puristamalla pakarat yhteen.','Pidä yläasento hetki ja laske hallitusti alas.'] },
+
+    ylataljKoko: { name:'Ylätalja (lat pulldown)', muscles:'Leveä selkälihas, Hauis', tauko:90,
+        sets:[{sarja:1,toistot:'6–8',paino:'Valitse paino'},{sarja:2,toistot:'6–8',paino:'Sama / lisää painoa'},{sarja:3,toistot:'6–8',paino:'Sama / lisää painoa'},{sarja:4,toistot:'6–8',paino:'Sama / lisää painoa'}],
+        instructions:['Istu ylätaljalaitteessa, aseta reidet tukipöydän alle.','Tartu tankoon leveästi kämmenet eteenpäin.','Vedä tanko leuan alapuolelle pitäen kyynärpäät alaspäin.','Ojenna käsivarret hallitusti takaisin suoriksi.'] },
+
+    // ── Laiteohjelma ─────────────────────────────────────────────────────────────
+
+    jalkaprässiLaite: { name:'Jalkaprässi (kone)', muscles:'Etureidet, Pakarat', tauko:90,
+        sets:[{sarja:1,toistot:'10–12',paino:'Valitse paino'},{sarja:2,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:3,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:4,toistot:'10–12',paino:'Sama / lisää painoa'}],
+        instructions:['Istu jalkaprässissä selkä tuettuna.','Aseta jalat n. hartialeveyteen, varpaat hieman ulospäin.','Laske jalat niin, että polvet tulevat n. 90° kulmaan.','Paina alusta jaloilla ja ojenna (ei täysin suoriksi).'] },
+
+    hackKyykkyLaite: { name:'Hack kyykky (kone)', muscles:'Etureidet, Pakarat', tauko:90,
+        sets:[{sarja:1,toistot:'10–12',paino:'Valitse paino'},{sarja:2,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:3,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:4,toistot:'10–12',paino:'Sama / lisää painoa'}],
+        instructions:['Asetu hack kyykky -koneeseen, selkä tuettuna alustaa vasten.','Aseta jalat n. hartialeveyteen alustalle.','Laske alas hallitusti kunnes polvet ovat n. 90° kulmassa.','Ojenna jalat ylös pitäen polvet suunnattuna varpaiden yli.'] },
+
+    polvenKoukistusKone: { name:'Polven koukistus laitteessa', muscles:'Takareidet', tauko:75,
+        sets:[{sarja:1,toistot:'10–12',paino:'Valitse paino'},{sarja:2,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:3,toistot:'10–12',paino:'Sama / lisää painoa'}],
+        instructions:['Asetu polven koukistus -koneeseen maaten tai istuen.','Koukista jalat hallitusti pakaroita kohti.','Pidä yläasento hetken.','Laske hallitusti takaisin suoriksi.'] },
+
+    polvenOjennusKone: { name:'Polven ojennus laitteessa', muscles:'Etureidet', tauko:75,
+        sets:[{sarja:1,toistot:'12–15',paino:'Valitse paino'},{sarja:2,toistot:'12–15',paino:'Sama / lisää painoa'},{sarja:3,toistot:'12–15',paino:'Sama / lisää painoa'}],
+        instructions:['Istu polven ojennus -koneessa, jalat tyynyjen alla.','Ojenna jalat suoriksi hallitusti.','Pidä yläasento hetken.','Laske hallitusti takaisin n. 90° kulmaan.'] },
+
+    pakarapotkutTalja: { name:'Pakarapotkut taljassa (cable kickback)', muscles:'Pakarat', tauko:60,
+        sets:[{sarja:1,toistot:'12–15 / jalka',paino:'Kevyt paino'},{sarja:2,toistot:'12–15 / jalka',paino:'Sama / lisää painoa'},{sarja:3,toistot:'12–15 / jalka',paino:'Sama / lisää painoa'}],
+        instructions:['Kiinnitä nilkkaremmi kaapelilaitteen alaosaan.','Seiso kasvot laitteeseen päin ja pidä tukipinnasta kiinni.','Vie jalka suoraan taaksepäin aktivoiden pakaran.','Laske hallitusti alas.'] },
+
+    loitontajaLaite: { name:'Loitontajaliike laitteessa', muscles:'Pakarat, Gluteus medius', tauko:45,
+        sets:[{sarja:1,toistot:'12–15',paino:'Valitse paino'},{sarja:2,toistot:'12–15',paino:'Sama / lisää painoa'},{sarja:3,toistot:'12–15',paino:'Sama / lisää painoa'}],
+        instructions:['Istu loitontajalaitteessa, jalat tyynyillä sisäpuolelta.','Paina jalat ulospäin niin pitkälle kuin hallitset.','Pidä yläasento hetki ja purista pakaroita.','Laske hallitusti takaisin.'] },
+
+    ylataljaPulldown: { name:'Ylätalja (lat pulldown)', muscles:'Leveä selkälihas, Hauis', tauko:90,
+        sets:[{sarja:1,toistot:'10–12',paino:'Valitse paino'},{sarja:2,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:3,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:4,toistot:'10–12',paino:'Sama / lisää painoa'}],
+        instructions:['Istu ylätaljalaitteessa, aseta reidet tukipöydän alle.','Tartu tankoon leveästi kämmenet eteenpäin.','Vedä tanko leuan alapuolelle pitäen kyynärpäät alaspäin.','Ojenna käsivarret hallitusti takaisin suoriksi.'] },
+
+    rintaprassiKone: { name:'Rintaprässi (kone)', muscles:'Rintakehä, Ojentajalihas, Etuhartia', tauko:90,
+        sets:[{sarja:1,toistot:'10–12',paino:'Valitse paino'},{sarja:2,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:3,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:4,toistot:'10–12',paino:'Sama / lisää painoa'}],
+        instructions:['Istu rintaprässikoneessa selkä tuettuna.','Aseta kahvat rintakehän korkeudelle.','Punnerra kahvat suoraan eteenpäin ojentaen käsivarret.','Laske hallitusti takaisin, älä päästä lihasta rentoutumaan kokonaan.'] },
+
+    altataljaIstuen: { name:'Alatalja istuen (soutukone)', muscles:'Selkä, Hauis', tauko:75,
+        sets:[{sarja:1,toistot:'10–12',paino:'Valitse paino'},{sarja:2,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:3,toistot:'10–12',paino:'Sama / lisää painoa'}],
+        instructions:['Istu soutukoneessa selkä suorana, jalat tuilla.','Vedä kahvat vatsaan pitäen kyynärpäät lähellä vartaloa.','Purista lapaluita yhteen yläasennossa.','Ojenna käsivarret hallitusti eteenpäin.'] },
+
+    sivunostoKone: { name:'Sivunosto (kone)', muscles:'Sivuhartia', tauko:60,
+        sets:[{sarja:1,toistot:'12–15',paino:'Valitse paino'},{sarja:2,toistot:'12–15',paino:'Sama / lisää painoa'},{sarja:3,toistot:'12–15',paino:'Sama / lisää painoa'}],
+        instructions:['Istu sivunostokoneessa, kyynärpäät tyynyillä.','Nosta kyynärpäät sivuille olkapäiden tasolle.','Laske hallitusti alas.'] },
+
+    hauiskone: { name:'Hauiskääntö (kone)', muscles:'Hauis', tauko:60,
+        sets:[{sarja:1,toistot:'10–12',paino:'Valitse paino'},{sarja:2,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:3,toistot:'10–12',paino:'Sama / lisää painoa'}],
+        instructions:['Istu hauiskoneessa kyynärpäät tyynyillä.','Koukista käsivarret ylöspäin hallitusti.','Purista yläasennossa hetki.','Laske hallitusti alas.'] },
+
+    ojentajakone: { name:'Ojentajapunnerrus (kone)', muscles:'Ojentajalihas', tauko:60,
+        sets:[{sarja:1,toistot:'10–12',paino:'Valitse paino'},{sarja:2,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:3,toistot:'10–12',paino:'Sama / lisää painoa'}],
+        instructions:['Istu ojentajakoneessa kyynärpäät tyynyillä.','Ojenna käsivarret suoriksi hallitusti.','Pidä hetki ja laske hallitusti takaisin.'] },
+
+    // ── Vatsalihakset ─────────────────────────────────────────────────────────────
+
+    deadBug: { name:'Kuollut ötökkä', muscles:'Vatsa, Ydinlihakset', tauko:45,
+        sets:[{sarja:1,toistot:'8–10 / puoli',paino:'Oma keho'},{sarja:2,toistot:'8–10 / puoli',paino:'Oma keho'},{sarja:3,toistot:'8–10 / puoli',paino:'Oma keho'}],
+        instructions:['Makaa selällään polvet ja lonkat 90° kulmassa, kädet suorina ylöspäin.','Laske vastakkainen käsi ja jalka hitaasti alaspäin pitäen alaselkä kiinni lattiassa.','Tuo raaja takaisin ylös ja vaihda puolia.','Hengitä ulos laskiessa ja sisään noustessa.'] },
+
+    russianTwist: { name:'Vartalonkierto', muscles:'Vinot vatsalihakset', tauko:45,
+        sets:[{sarja:1,toistot:'12–16',paino:'Oma keho / paino käsissä'},{sarja:2,toistot:'12–16',paino:'Sama'},{sarja:3,toistot:'12–16',paino:'Sama'}],
+        instructions:['Istu lattialla polvet koukussa, ylävartalon kulma n. 45°.','Pidä jalat lattialla tai kohotettuna (vaikeutettu).','Kierrä ylävartaloa puolelta toiselle — voit pitää käsissä painoa.','Pidä selkä suorana, äläkä anna hartioiden romahtaa.'] },
+
+    vatsarutisusTalja: { name:'Vatsarutistus taljassa kontallaan', muscles:'Vatsa', tauko:45,
+        sets:[{sarja:1,toistot:'12–15',paino:'Kevyt paino'},{sarja:2,toistot:'12–15',paino:'Sama / lisää painoa'},{sarja:3,toistot:'12–15',paino:'Sama / lisää painoa'}],
+        instructions:['Kiinnitä köysi tai naru ylätaljan kaapeliin.','Asetu polvillesi laitteen eteen, pidä narusta kiinni niskasi takana.','Kumarra etteen aktivoiden vatsalihakset — vie kyynärpäät kohti polvia.','Nouse hallitusti takaisin lähtöasentoon.'] },
+
+    garhammerRaise: { name:'Roikkuva lantionnosto', muscles:'Alavatsalihaset', tauko:45,
+        sets:[{sarja:1,toistot:'8–12',paino:'Oma keho'},{sarja:2,toistot:'8–12',paino:'Oma keho'},{sarja:3,toistot:'8–12',paino:'Oma keho'}],
+        instructions:['Roiku tangosta käsivarret suorina.','Nosta polvet rintaan asti yhdistäen samalla lantion kierto ylöspäin.','Pidä hetki yläasennossa.','Laske hallitusti alas.'] },
+
+    jalkojenNosto90: { name:'Jalkojen nosto', muscles:'Alavatsalihaset', tauko:45,
+        sets:[{sarja:1,toistot:'10–15',paino:'Oma keho'},{sarja:2,toistot:'10–15',paino:'Oma keho'},{sarja:3,toistot:'10–15',paino:'Oma keho'}],
+        instructions:['Makaa selällään kädet sivuilla tai vartalon alla lantion tukena.','Pidä jalat suorina tai kevyesti koukussa.','Nosta jalat 90° kulmaan pitäen alaselkä lattiaa vasten.','Laske hallitusti alas, älä päästä jalkoja koskettamaan lattiaa.'] },
+
+    vatsarutistusJumppapallo: { name:'Vatsarutistus jumppapallolla', muscles:'Vatsa', tauko:45,
+        sets:[{sarja:1,toistot:'12–15',paino:'Oma keho'},{sarja:2,toistot:'12–15',paino:'Oma keho'},{sarja:3,toistot:'12–15',paino:'Oma keho'}],
+        instructions:['Istu jumppapallon päälle ja liu\'u eteenpäin niin, että alaselkä lepää pallolla.','Kädet ristissä rintakehällä tai niskassa.','Nosta ylävartaloa ylöspäin aktivoiden vatsalihakset.','Laske hallitusti takaisin — pallo tukee alaselkää koko ajan.'] },
+
+    linkkuveitsi: { name:'Linkkuveitsi (V-up)', muscles:'Vatsa, Alavatsalihaset', tauko:45,
+        sets:[{sarja:1,toistot:'10–15',paino:'Oma keho'},{sarja:2,toistot:'10–15',paino:'Oma keho'},{sarja:3,toistot:'10–15',paino:'Oma keho'}],
+        instructions:['Makaa selällään kädet ojennettuna taaksepäin.','Nosta samanaikaisesti suorat jalat ja ylävartalo ylöspäin — muodosta V-muoto.','Koita koskettaa käsillä varpaita yläasennossa.','Laske hallitusti alas.'] },
+
+    // ── PLACEHOLDER — keep last so old references don't break ─────────────────
+    penkkilistos4: { name:'Penkkilistos',muscles:'Rinta, Ojentajalihas, Etuhartia',
+        sets:[{sarja:1,toistot:'6–8',paino:'Valitse paino'},{sarja:2,toistot:'6–8',paino:'Sama / lisää painoa'},{sarja:3,toistot:'6–8',paino:'Sama / lisää painoa'},{sarja:4,toistot:'6–8',paino:'Lisää painoa'}],
+        instructions:['Aseta selkä penkkiin ja tartu tankoon hieman hartioita leveämmältä.','Laske tanko hallitusti rintaan asti.','Paina tanko ylös ja ojenna käsivarret lähes suoriksi.','Pidä kyynärpäät n. 45° kulmassa vartalosta.','Hengitä sisään laskiessa, ulos nostaessa.'] },
+    penkkilistos3: { name:'Penkkilistos',muscles:'Rinta, Ojentajalihas, Etuhartia',
+        sets:[{sarja:1,toistot:'8–10',paino:'Valitse paino'},{sarja:2,toistot:'8–10',paino:'Sama / +2,5 kg'},{sarja:3,toistot:'8–10',paino:'Sama / +2,5 kg'},{sarja:4,toistot:'6–8',paino:'Lisää painoa'}],
+        instructions:['Aseta selkä penkkiin ja tartu tankoon hieman hartioita leveämmältä.','Laske tanko hallitusti rintaan asti.','Paina tanko ylös ja ojenna käsivarret lähes suoriksi.','Pidä kyynärpäät n. 45° kulmassa vartalosta.','Hengitä sisään laskiessa, ulos nostaessa.'] },
+    vinopenkki: { name:'Vinopenkkilistos (käsipainot)',muscles:'Ylärintakehä, Etuhartia',
+        sets:[{sarja:1,toistot:'10–12',paino:'Valitse paino'},{sarja:2,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:3,toistot:'10–12',paino:'Sama / lisää painoa'}],
+        instructions:['Aseta penkki 30–45° kulmaan.','Pidä selkä penkkiä vasten koko suorituksen ajan.','Laske käsipainot rintakehän yläosaan.','Paina ylös ja tuo käsipainot kevyesti yhteen yläasennossa.'] },
+    rintakaapeli: { name:'Rintakaapeli (ristiveto)',muscles:'Rinta',
+        sets:[{sarja:1,toistot:'12–15',paino:'Kevyt paino'},{sarja:2,toistot:'12–15',paino:'Sama / lisää painoa'},{sarja:3,toistot:'12–15',paino:'Sama / lisää painoa'}],
+        instructions:['Aseta kaapelit hartioiden korkeudelle molemmin puolin.','Ota askel eteen, pidä selkä suorana ja rintakehä auki.','Tuo kädet yhteen eteen kaaria myöten.','Pidä hetki ja palaa hallitusti lähtöasentoon.'] },
+    pystypunnerrus: { name:'Pystypunnerrus (käsipainot)',muscles:'Hartiat, Ojentajalihas',
+        sets:[{sarja:1,toistot:'10–12',paino:'Valitse paino'},{sarja:2,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:3,toistot:'10–12',paino:'Sama / lisää painoa'}],
+        instructions:['Istu tai seiso selkä suorana.','Pidä käsipainot olkapäiden tasolla, kämmenet eteenpäin.','Punnerra käsipainot suoraan ylös pään yli.','Laske hallitusti takaisin lähtöasentoon.'] },
+    pystypunnerrusTanko4: { name:'Pystypunnerrus (tanko)',muscles:'Hartiat, Ojentajalihas',
+        sets:[{sarja:1,toistot:'6–8',paino:'Valitse paino'},{sarja:2,toistot:'8–10',paino:'Sama / lisää painoa'},{sarja:3,toistot:'8–10',paino:'Sama / lisää painoa'},{sarja:4,toistot:'8–10',paino:'Sama / lisää painoa'}],
+        instructions:['Seiso tai istu selkä suorana, tanko rinnan päällä hartian tasolla.','Punnerra tanko suoraan ylös pään yli.','Ojenna käsivarret lähes suoriksi yläasennossa.','Laske hallitusti takaisin lähtöasentoon.'] },
+    sivunosto: { name:'Sivunosto',muscles:'Sivuhartia',
+        sets:[{sarja:1,toistot:'12–15',paino:'Kevyt paino'},{sarja:2,toistot:'12–15',paino:'Sama / lisää painoa'},{sarja:3,toistot:'12–15',paino:'Sama / lisää painoa'},{sarja:4,toistot:'12–15',paino:'Sama / lisää painoa'}],
+        instructions:['Seiso hartialevyisessä haara-asennossa, käsipainot sivuilla.','Nosta käsipainot sivuille olkapäiden tasolle.','Pidä kyynärpäät hieman koukussa koko liikkeen ajan.','Laske hallitusti alas.'] },
+    sivunosto3: { name:'Sivunosto',muscles:'Sivuhartia',
+        sets:[{sarja:1,toistot:'12–15',paino:'Kevyt paino'},{sarja:2,toistot:'12–15',paino:'Sama / lisää painoa'},{sarja:3,toistot:'12–15',paino:'Sama / lisää painoa'}],
+        instructions:['Seiso hartialevyisessä haara-asennossa, käsipainot sivuilla.','Nosta käsipainot sivuille olkapäiden tasolle.','Pidä kyynärpäät hieman koukussa koko liikkeen ajan.','Laske hallitusti alas.'] },
+    leuanveto: { name:'Leuanveto',muscles:'Leveä selkälihas, Hauis',
+        sets:[{sarja:1,toistot:'6–10',paino:'Oma kehonpaino'},{sarja:2,toistot:'6–10',paino:'Oma kehonpaino'},{sarja:3,toistot:'6–10',paino:'Oma keho / lisäpaino'},{sarja:4,toistot:'Maks',paino:'Oma kehonpaino'}],
+        instructions:['Tartu tankoon leveydeltä hartioita leveämmältä, kämmenet eteenpäin.','Riippu käsivarret lähes suorina.','Vedä itsesi ylös niin, että leuka ylittää tangon.','Pidä rintakehä auki ja vedä lapaluita yhteen.','Laske hallitusti alas.'] },
+    penkkisoutu: { name:'Penkkisoutu (tanko)',muscles:'Selkä, Hauis, Takaolkapää',
+        sets:[{sarja:1,toistot:'8–10',paino:'Valitse paino'},{sarja:2,toistot:'8–10',paino:'Sama / lisää painoa'},{sarja:3,toistot:'8–10',paino:'Sama / lisää painoa'},{sarja:4,toistot:'8–10',paino:'Sama / lisää painoa'}],
+        instructions:['Seiso hartialevyisessä haara-asennossa, kumarra eteenpäin n. 45°.','Pidä selkä suorana ja polvet hieman koukussa.','Vedä tanko navanseutuun, kyynärpäät lähellä vartaloa.','Purista lapaluita yhteen yläasennossa.','Laske hallitusti alas.'] },
+    kaapeliveto: { name:'Kaapeliveto (istuen)',muscles:'Selkä, Hauis',
+        sets:[{sarja:1,toistot:'10–12',paino:'Valitse paino'},{sarja:2,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:3,toistot:'10–12',paino:'Sama / lisää painoa'}],
+        instructions:['Istu kaapelilaitteessa selkä suorana, jalat jalkatukia vasten.','Vedä kahva navanseutuun pitäen kyynärpäät kiinni vartalossa.','Purista lapaluita yhteen ja pidä hetki.','Ojenna hallitusti eteenpäin lähtöasentoon.'] },
+    hauiskaanto: { name:'Hauiskääntö (käsipainot)',muscles:'Hauis',
+        sets:[{sarja:1,toistot:'10–12',paino:'Valitse paino'},{sarja:2,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:3,toistot:'10–12',paino:'Sama / lisää painoa'}],
+        instructions:['Seiso tai istu selkä suorana, käsipainot käsissä.','Pidä kyynärpäät kiinni vartalossa koko ajan.','Koukista käsivarret ylöspäin, kämmenet ylöspäin.','Laske hallitusti alas suoriksi.'] },
+    hauiskaanto4: { name:'Hauiskääntö (käsipainot)',muscles:'Hauis',
+        sets:[{sarja:1,toistot:'10–12',paino:'Valitse paino'},{sarja:2,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:3,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:4,toistot:'10–12',paino:'Sama / lisää painoa'}],
+        instructions:['Seiso tai istu selkä suorana, käsipainot käsissä.','Pidä kyynärpäät kiinni vartalossa koko ajan.','Koukista käsivarret ylöspäin, kämmenet ylöspäin.','Laske hallitusti alas suoriksi.'] },
+    kasvosveto: { name:'Kasvosveto',muscles:'Takaolkapää, Kiertäjäkalvosin',
+        sets:[{sarja:1,toistot:'15–20',paino:'Kevyt paino'},{sarja:2,toistot:'15–20',paino:'Sama / kevyt progressio'},{sarja:3,toistot:'15–20',paino:'Sama / kevyt progressio'}],
+        instructions:['Aseta kaapelilaite silmien korkeuteen, käytä narua.','Ota hartioita leveämpi ote.','Vedä narua kasvoille asti niin, että kädet tulevat korvien tasalle.','Purista lapaluita yhteen ja pidä hetki.','Laske hallitusti takaisin.'] },
+    ojentajapunnerrus: { name:'Ojentajapunnerrus (naru)',muscles:'Ojentajalihas',
+        sets:[{sarja:1,toistot:'12–15',paino:'Valitse paino'},{sarja:2,toistot:'12–15',paino:'Sama / lisää painoa'},{sarja:3,toistot:'12–15',paino:'Sama / lisää painoa'}],
+        instructions:['Seiso kaapelilaitteen edessä, naru ylhäällä.','Pidä kyynärpäät kiinni vartalossa koko ajan.','Ojenna käsivarret alas samalla avaten narua ulospäin.','Palaa hallitusti yläasentoon.'] },
+    ranskalainen: { name:'Ranskalainen punnerrus',muscles:'Ojentajalihas',
+        sets:[{sarja:1,toistot:'10–12',paino:'Valitse paino'},{sarja:2,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:3,toistot:'10–12',paino:'Sama / lisää painoa'}],
+        instructions:['Makaa penkillä, tanko tai käsipainot ojennettuna pään yli.','Pidä kyynärpäät paikallaan, taivuta käsivarret niin, että paino laskee otsaan asti.','Ojenna käsivarret takaisin suoriksi.'] },
+    vasarakaanto: { name:'Vasarakääntö',muscles:'Hauis, Käsivarsi',
+        sets:[{sarja:1,toistot:'12–15',paino:'Valitse paino'},{sarja:2,toistot:'12–15',paino:'Sama / lisää painoa'},{sarja:3,toistot:'12–15',paino:'Sama / lisää painoa'}],
+        instructions:['Seiso selkä suorana, käsipainot käsissä kämmenet sisäänpäin.','Pidä kyynärpäät kiinni vartalossa.','Koukista käsivarret ylöspäin ilman ranteen kiertoa.','Laske hallitusti alas.'] },
+    takakyykky4: { name:'Takakyykky (tanko)',muscles:'Etureidet, Pakarat, Selkä',
+        sets:[{sarja:1,toistot:'6–8',paino:'Valitse paino'},{sarja:2,toistot:'6–8',paino:'Sama / lisää painoa'},{sarja:3,toistot:'6–8',paino:'Sama / lisää painoa'},{sarja:4,toistot:'6–8',paino:'Lisää painoa'}],
+        instructions:['Aseta tanko yläselän päälle, hartialevyinen jalka-asento.','Varpaat hieman ulospäin.','Laskeudu kyykkyyn niin, että reidet tulevat vaakatasolle tai alle.','Pidä selkä suorana ja katse eteenpäin tai hieman ylös.','Nouse ylös suoristamalla jalat.'] },
+    takakyykky3: { name:'Takakyykky (tanko)',muscles:'Etureidet, Pakarat, Selkä',
+        sets:[{sarja:1,toistot:'8–10',paino:'Valitse paino'},{sarja:2,toistot:'8–10',paino:'Sama / lisää painoa'},{sarja:3,toistot:'8–10',paino:'Sama / lisää painoa'},{sarja:4,toistot:'6–8',paino:'Lisää painoa'}],
+        instructions:['Aseta tanko yläselän päälle, hartialevyinen jalka-asento.','Varpaat hieman ulospäin.','Laskeudu kyykkyyn niin, että reidet tulevat vaakatasolle tai alle.','Pidä selkä suorana ja katse eteenpäin tai hieman ylös.','Nouse ylös suoristamalla jalat.'] },
+    romanialainenMd: { name:'Romanialainen maastaveto',muscles:'Takareidet, Pakarat',
+        sets:[{sarja:1,toistot:'10–12',paino:'Valitse paino'},{sarja:2,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:3,toistot:'10–12',paino:'Sama / lisää painoa'}],
+        instructions:['Seiso hartialevyisessä haara-asennossa, tanko käsissä.','Pidä polvet hieman koukussa koko ajan.','Kumarra eteenpäin selkä suorana, laske tanko reisiä pitkin.','Tunne venytys takaosassa reisiä.','Nouse ylös aktivoimalla pakarat.'] },
+    romanialainenMd4: { name:'Romanialainen maastaveto',muscles:'Takareidet, Pakarat',
+        sets:[{sarja:1,toistot:'10–12',paino:'Valitse paino'},{sarja:2,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:3,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:4,toistot:'10–12',paino:'Sama / lisää painoa'}],
+        instructions:['Seiso hartialevyisessä haara-asennossa, tanko käsissä.','Pidä polvet hieman koukussa koko ajan.','Kumarra eteenpäin selkä suorana, laske tanko reisiä pitkin.','Tunne venytys takaosassa reisiä.','Nouse ylös aktivoimalla pakarat.'] },
+    maastaveto: { name:'Maastaveto',muscles:'Koko keho, Takareidet, Alaselkä',
+        sets:[{sarja:1,toistot:'5–6',paino:'Valitse paino'},{sarja:2,toistot:'5–6',paino:'Sama / lisää painoa'},{sarja:3,toistot:'5–6',paino:'Sama / lisää painoa'},{sarja:4,toistot:'5',paino:'Lisää painoa'}],
+        instructions:['Seiso tanko jalkojen yläpuolella, jalat hartialevyisessä asennossa.','Kumarra alas, tartu tankoon hartialevyisellä otteella.','Pidä selkä suorana, aktivoi ydinlihakset.','Nosta tanko jaloilla ojentaen, ei alaselällä vetäen.','Laske hallitusti takaisin lattialle.'] },
+    jalkaprässi: { name:'Jalkaprässi',muscles:'Etureidet, Pakarat',
+        sets:[{sarja:1,toistot:'10–12',paino:'Valitse paino'},{sarja:2,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:3,toistot:'12–15',paino:'Sama / lisää painoa'},{sarja:4,toistot:'12–15',paino:'Sama / lisää painoa'}],
+        instructions:['Istu jalkaprässissä selkä tuettuna.','Aseta jalat n. hartialeveyteen, varpaat hieman ulospäin.','Laske jalat niin, että polvet tulevat n. 90° kulmaan.','Paina alusta jaloilla ja ojenna (ei täysin suoriksi).'] },
+    jalkaprässi3: { name:'Jalkaprässi',muscles:'Etureidet, Pakarat',
+        sets:[{sarja:1,toistot:'10–12',paino:'Valitse paino'},{sarja:2,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:3,toistot:'12–15',paino:'Sama / lisää painoa'}],
+        instructions:['Istu jalkaprässissä selkä tuettuna.','Aseta jalat n. hartialeveyteen, varpaat hieman ulospäin.','Laske jalat niin, että polvet tulevat n. 90° kulmaan.','Paina alusta jaloilla ja ojenna (ei täysin suoriksi).'] },
+    jalkojenOjennus: { name:'Jalkojen ojennus (kone)',muscles:'Etureidet',
+        sets:[{sarja:1,toistot:'12–15',paino:'Valitse paino'},{sarja:2,toistot:'12–15',paino:'Sama / lisää painoa'},{sarja:3,toistot:'12–15',paino:'Sama / lisää painoa'}],
+        instructions:['Istu jalkojen ojennus -koneessa, jalat tyynyjen alla.','Ojenna jalat suoriksi hallitusti.','Pidä yläasento hetken.','Laske hallitusti takaisin n. 90° kulmaan.'] },
+    jalkojenKoukistus: { name:'Jalkojen koukistus (kone)',muscles:'Takareidet',
+        sets:[{sarja:1,toistot:'12–15',paino:'Valitse paino'},{sarja:2,toistot:'12–15',paino:'Sama / lisää painoa'},{sarja:3,toistot:'12–15',paino:'Sama / lisää painoa'}],
+        instructions:['Asetu jalkojen koukistus -koneeseen vatsallesi tai istuen.','Koukista jalat hallitusti pakaroita kohti.','Pidä yläasento hetki.','Laske hallitusti takaisin suoriksi.'] },
+    pohjenousu: { name:'Pohjenousu (seisten)',muscles:'Pohkeet',
+        sets:[{sarja:1,toistot:'15–20',paino:'Oma paino / lisäpaino'},{sarja:2,toistot:'15–20',paino:'Sama'},{sarja:3,toistot:'15–20',paino:'Sama'},{sarja:4,toistot:'Maks',paino:'Sama'}],
+        instructions:['Seiso portaan reunalla tai tasaisella alustalla.','Nouse varpaiden päälle mahdollisimman korkealle.','Pidä yläasento hetken.','Laske hallitusti alas, mahdollisesti hieman kantapäiden alapuolelle.'] },
+    pohjenousu3: { name:'Pohjenousu (seisten)',muscles:'Pohkeet',
+        sets:[{sarja:1,toistot:'15–20',paino:'Oma paino / lisäpaino'},{sarja:2,toistot:'15–20',paino:'Sama'},{sarja:3,toistot:'15–20',paino:'Sama'}],
+        instructions:['Seiso portaan reunalla tai tasaisella alustalla.','Nouse varpaiden päälle mahdollisimman korkealle.','Pidä yläasento hetken.','Laske hallitusti alas, mahdollisesti hieman kantapäiden alapuolelle.'] },
+    askelkyykky: { name:'Askelkyykky (käsipainot)',muscles:'Pakarat, Etureidet',
+        sets:[{sarja:1,toistot:'10–12 / jalka',paino:'Valitse paino'},{sarja:2,toistot:'10–12 / jalka',paino:'Sama / lisää painoa'},{sarja:3,toistot:'10–12 / jalka',paino:'Sama / lisää painoa'}],
+        instructions:['Seiso suorana käsipainot käsissä.','Ota pitkä askel eteenpäin.','Laske takapolvea kohti lattiaa, etupolvi 90° kulmaan.','Nouse takaisin ylös etujalan voimalla.','Vaihda jalkaa vuorotellen.'] },
+    lonkkakumarrus: { name:'Lonkkakumarrus (käsipainot)',muscles:'Pakarat, Takareidet',
+        sets:[{sarja:1,toistot:'12–15',paino:'Valitse paino'},{sarja:2,toistot:'12–15',paino:'Sama / lisää painoa'},{sarja:3,toistot:'12–15',paino:'Sama / lisää painoa'}],
+        instructions:['Seiso suorana, käsipainot käsissä.','Kumarra eteenpäin lonkasta pitäen selkä suorana.','Tunne venytys pakaroissa ja takaosissa.','Aktivoi pakarat noustessasi takaisin suoraksi.'] },
+    lankku: { name:'Lankku',muscles:'Vatsa, Selkä, Ydinlihakset',
+        sets:[{sarja:1,toistot:'30–60 s',paino:'Oma keho'},{sarja:2,toistot:'30–60 s',paino:'Oma keho'},{sarja:3,toistot:'30–60 s',paino:'Oma keho'}],
+        instructions:['Asetu vatsallesi, nouse kyynärvarren ja varpaiden varaan.','Pidä keho suorana — älä anna lantion vajota alas tai nousta ylös.','Jännitä vatsa- ja pakaralihakset.','Hengitä rauhallisesti koko suorituksen ajan.'] },
+    vatsarutistus: { name:'Vatsarutistus',muscles:'Vatsa',
+        sets:[{sarja:1,toistot:'15–20',paino:'Oma keho / kevyt paino'},{sarja:2,toistot:'15–20',paino:'Sama'},{sarja:3,toistot:'15–20',paino:'Sama'}],
+        instructions:['Makaa selällään polvet koukussa tai käytä vatsakonetta.','Taivuta ylävartalo eteenpäin aktivoiden vatsalihakset.','Pidä hetkinen yläasennossa.','Laske hallitusti takaisin.'] },
+    latpulldown: { name:'Latpulldown (laite)',muscles:'Leveä selkälihas, Hauis',
+        sets:[{sarja:1,toistot:'10–12',paino:'Valitse paino'},{sarja:2,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:3,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:4,toistot:'10–12',paino:'Sama / lisää painoa'}],
+        instructions:['Istu latpulldown-koneessa, aseta reidet tukipöydän alle.','Tartu tankoon leveästi kämmenet eteenpäin.','Vedä tanko leuan alapuolelle pitäen kyynärpäät alaspäin.','Purista lapaluita yhteen yläasennossa.','Ojenna käsivarret hallitusti takaisin suoriksi.'] },
+    soutukone: { name:'Soutukone (laite)',muscles:'Selkä, Hauis',
+        sets:[{sarja:1,toistot:'10–12',paino:'Valitse paino'},{sarja:2,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:3,toistot:'10–12',paino:'Sama / lisää painoa'}],
+        instructions:['Istu soutukoneessa selkä suorana, jalat tuilla.','Vedä kahvat vatsaan pitäen kyynärpäät lähellä vartaloa.','Purista lapaluita yhteen yläasennossa.','Ojenna käsivarret hallitusti eteenpäin.'] },
+    rintaprassiKone: { name:'Rintaprässi (kone)',muscles:'Rinta, Ojentajalihas, Etuhartia',
+        sets:[{sarja:1,toistot:'10–12',paino:'Valitse paino'},{sarja:2,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:3,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:4,toistot:'10–12',paino:'Sama / lisää painoa'}],
+        instructions:['Istu rintaprässikoneessa selkä tuettuna.','Aseta kahvat rintakehän korkeudelle.','Punnerra kahvat suoraan eteenpäin ojentaen käsivarret.','Laske hallitusti takaisin äläkä päästä lihasta rentoutumaan kokonaan.'] },
+    vinopenkiKone: { name:'Vinopenkin rintaprässi (kone)',muscles:'Ylärintakehä',
+        sets:[{sarja:1,toistot:'10–12',paino:'Valitse paino'},{sarja:2,toistot:'10–12',paino:'Sama / lisää painoa'},{sarja:3,toistot:'10–12',paino:'Sama / lisää painoa'}],
+        instructions:['Istu koneessa penkki n. 30° kulmassa.','Tartu kahvoihin rinnankorkeudelta.','Punnerra ylös ja eteen aktivoiden ylärintakehää.','Laske hallitusti takaisin.'] },
+    ojentajakone: { name:'Ojentajapunnerrus (kone)',muscles:'Ojentajalihas',
+        sets:[{sarja:1,toistot:'12–15',paino:'Valitse paino'},{sarja:2,toistot:'12–15',paino:'Sama / lisää painoa'},{sarja:3,toistot:'12–15',paino:'Sama / lisää painoa'}],
+        instructions:['Istu ojentajakoneessa kyynärpäät tyynyillä.','Ojenna käsivarret suoriksi hallitusti.','Pidä hetki ja laske hallitusti takaisin.'] },
+    hauiskone: { name:'Hauiskääntö (kone)',muscles:'Hauis',
+        sets:[{sarja:1,toistot:'12–15',paino:'Valitse paino'},{sarja:2,toistot:'12–15',paino:'Sama / lisää painoa'},{sarja:3,toistot:'12–15',paino:'Sama / lisää painoa'}],
+        instructions:['Istu hauiskoneessa kyynärpäät tyynyillä.','Koukista käsivarret ylöspäin hallitusti.','Purista yläasennossa hetki.','Laske hallitusti alas.'] },
+    sivunostoKone: { name:'Sivunosto (kone)',muscles:'Sivuhartia',
+        sets:[{sarja:1,toistot:'12–15',paino:'Valitse paino'},{sarja:2,toistot:'12–15',paino:'Sama / lisää painoa'},{sarja:3,toistot:'12–15',paino:'Sama / lisää painoa'}],
+        instructions:['Istu sivunostokoneessa, kyynärpäät tyynyillä.','Nosta kyynärpäät sivuille olkapäiden tasolle.','Laske hallitusti alas.'] },
+    takaolkapaaKone: { name:'Takaolkapääveto (kone)',muscles:'Takaolkapää, Kiertäjäkalvosin',
+        sets:[{sarja:1,toistot:'12–15',paino:'Valitse paino'},{sarja:2,toistot:'12–15',paino:'Sama / lisää painoa'},{sarja:3,toistot:'12–15',paino:'Sama / lisää painoa'}],
+        instructions:['Istu takaolkapääkoneessa kasvot tyynyä vasten.','Vedä kahvat taaksepäin sivuille jännitäen takaolkapäitä.','Pidä hetki ja laske hallitusti takaisin.'] },
+    pohjenousuKone: { name:'Pohjenousu (kone)',muscles:'Pohkeet',
+        sets:[{sarja:1,toistot:'15–20',paino:'Valitse paino'},{sarja:2,toistot:'15–20',paino:'Sama / lisää painoa'},{sarja:3,toistot:'15–20',paino:'Sama / lisää painoa'},{sarja:4,toistot:'Maks',paino:'Sama'}],
+        instructions:['Istu pohkeen kouristus -koneessa.','Nouse varpaiden päälle mahdollisimman korkealle.','Pidä yläasento hetken.','Laske hallitusti alas kantapäiden alapuolelle.'] },
+    lonkkakoukistusKone: { name:'Lonkkakoukistus (kone)',muscles:'Pakarat, Lonkka',
+        sets:[{sarja:1,toistot:'12–15 / jalka',paino:'Valitse paino'},{sarja:2,toistot:'12–15 / jalka',paino:'Sama / lisää painoa'},{sarja:3,toistot:'12–15 / jalka',paino:'Sama / lisää painoa'}],
+        instructions:['Seiso lonkkakoukistuskoneessa kasvot laitteeseen päin.','Koukista lonkka ja nosta polvi eteen.','Laske hallitusti takaisin.','Vaihda jalkaa sarjojen välillä.'] },
+};
+
+// ── Programs data ──────────────────────────────────────────────────────────────
+
+const DAYS = {
+    alakroppa_A: {
+        kuvaus: 'Alakeho — Etureidet & Pakarat (kyykky)',
+        harjoitukset: [E.takakyykkyA, E.maljakyykky, E.askelkyykkyTaakse, E.polvenKoukistus3, E.polvenOjennus3, E.pohjenostotSeisten, E.lankku],
+    },
+    alakroppa_B: {
+        kuvaus: 'Alakeho — Pakarat & Takareidet',
+        harjoitukset: [E.lantionnosto, E.yhdenJalanMd, E.bulgarialainenAskelkyykky, E.gluteStepUp, E.polvenKoukistus4, E.pohjenostotSeisten, E.deadBug],
+    },
+    ylakroppa_A: {
+        kuvaus: 'Yläkeho — Penkki & Soutu',
+        harjoitukset: [E.penkkipunnerrusTanko, E.pystypunnerrusTankoSeisten, E.vaakasoutu, E.leuanvetoA, E.hauiskaantoA, E.ojentajaPaanTakaa, E.vatsarutisusTalja],
+    },
+    ylakroppa_B: {
+        kuvaus: 'Yläkeho — Hartiat & Leuanveto',
+        harjoitukset: [E.pystypunnerrusTankoSeisten, E.leuanvetoB, E.vinopenkkipunnerrus, E.kulmasoutuYhdella, E.sivunostoKaapeli, E.facepull, E.russianTwist],
+    },
+    kokovartalo: {
+        kuvaus: 'Kokovartalo — Koko keho',
+        harjoitukset: [E.takakyykkyKoko, E.penkkipunnerrusTanko, E.lantionnostoKoko, E.ylataljKoko, E.ojentajaMaaten, E.hauiskaantoA, E.garhammerRaise],
+    },
+    alakroppa_laite: {
+        kuvaus: 'Alakeho — Laitteet',
+        harjoitukset: [E.jalkaprässiLaite, E.hackKyykkyLaite, E.polvenKoukistusKone, E.polvenOjennusKone, E.pakarapotkutTalja, E.loitontajaLaite, E.jalkojenNosto90],
+    },
+    ylakroppa_laite: {
+        kuvaus: 'Yläkeho — Laitteet',
+        harjoitukset: [E.ylataljaPulldown, E.rintaprassiKone, E.altataljaIstuen, E.sivunostoKone, E.hauiskone, E.ojentajakone, E.vatsarutistusJumppapallo],
+    },
+    kokovartalo_laite: {
+        kuvaus: 'Kokovartalo — Laitteet',
+        harjoitukset: [E.jalkaprässiLaite, E.ylataljaPulldown, E.polvenKoukistusKone, E.rintaprassiKone, E.pakarapotkutTalja, E.sivunostoKone, E.linkkuveitsi],
+    },
+};
+
+function d(nimi, tmpl) {
+    return { nimi, kuvaus: tmpl.kuvaus, harjoitukset: tmpl.harjoitukset };
+}
+
+const programs = {
+    kokovartalo: {
+        label: 'Kokovartalo',
+        labelHtml: 'Kokovartalo',
+        desc: 'Tasapainoinen ohjelma koko keholle.',
+        splits: {
+            2: [d('Treeni 1', DAYS.alakroppa_A),    d('Treeni 2', DAYS.ylakroppa_A)],
+            3: [d('Treeni 1', DAYS.alakroppa_A),    d('Treeni 2', DAYS.ylakroppa_A),   d('Treeni 3', DAYS.kokovartalo)],
+            4: [d('Treeni 1', DAYS.alakroppa_A),    d('Treeni 2', DAYS.ylakroppa_A),   d('Treeni 3', DAYS.alakroppa_B),    d('Treeni 4', DAYS.ylakroppa_B)],
+        }
+    },
+    alakroppa: {
+        label: 'Alakroppapainotteinen',
+        labelHtml: 'Alakroppa-<br>painotteinen',
+        desc: 'Ohjelma pakaroiden ja jalkojen kehittämiseen.',
+        splits: {
+            2: [d('Treeni 1', DAYS.alakroppa_A),    d('Treeni 2', DAYS.ylakroppa_A)],
+            3: [d('Treeni 1', DAYS.alakroppa_A),    d('Treeni 2', DAYS.ylakroppa_A),   d('Treeni 3', DAYS.alakroppa_B)],
+            4: [d('Treeni 1', DAYS.alakroppa_A),    d('Treeni 2', DAYS.ylakroppa_A),   d('Treeni 3', DAYS.alakroppa_B),    d('Treeni 4', DAYS.ylakroppa_B)],
+        }
+    },
+    ylakroppa: {
+        label: 'Yläkroppapainotteinen',
+        labelHtml: 'Yläkroppa-<br>painotteinen',
+        desc: 'Ohjelma rintakehän ja selän kehittämiseen.',
+        splits: {
+            2: [d('Treeni 1', DAYS.ylakroppa_A),    d('Treeni 2', DAYS.alakroppa_A)],
+            3: [d('Treeni 1', DAYS.ylakroppa_A),    d('Treeni 2', DAYS.alakroppa_A),   d('Treeni 3', DAYS.ylakroppa_B)],
+            4: [d('Treeni 1', DAYS.ylakroppa_A),    d('Treeni 2', DAYS.alakroppa_A),   d('Treeni 3', DAYS.ylakroppa_B),    d('Treeni 4', DAYS.alakroppa_B)],
+        }
+    },
+    laite: {
+        label: 'Laiteohjelma',
+        labelHtml: 'Laiteohjelma',
+        desc: 'Kaikki ohjelman liikkeet tehdään laitteilla ilman vapaita painoja.',
+        splits: {
+            2: [d('Treeni 1', DAYS.alakroppa_laite), d('Treeni 2', DAYS.ylakroppa_laite)],
+            3: [d('Treeni 1', DAYS.alakroppa_laite), d('Treeni 2', DAYS.ylakroppa_laite), d('Treeni 3', DAYS.kokovartalo_laite)],
+            4: [d('Treeni 1', DAYS.alakroppa_laite), d('Treeni 2', DAYS.ylakroppa_laite), d('Treeni 3', DAYS.alakroppa_laite), d('Treeni 4', DAYS.ylakroppa_laite)],
+        }
+    },
+};
+
+// ── State ──────────────────────────────────────────────────────────────────────
+
+let currentStep = 1;
+let selectedProgram = null;
+let selectedSplit = null;
+let currentDay = 0;
+let currentExercise = 0;
+const completed = {};
+let lastLogs = {};
+let savedPrograms = [];
+
+let token = localStorage.getItem('token');
+let currentUser = localStorage.getItem('username');
+let activeTab = 'login';
+
+// ── Step indicator ─────────────────────────────────────────────────────────────
+
+function updateStepIndicator() {
+    const onHome = currentStep === 0;
+    document.getElementById('step-indicator').style.display = onHome ? 'none' : '';
+    document.getElementById('step-label-row').style.display = onHome ? 'none' : '';
+
+    for (let i = 1; i <= 3; i++) {
+        const dot = document.getElementById(`dot-${i}`);
+        const label = document.getElementById(`label-${i}`);
+        dot.className = 'step-dot' + (i === currentStep ? ' active' : i < currentStep ? ' done' : '');
+        label.className = 'step-label' + (i === currentStep ? ' active' : '');
+    }
+    for (let i = 1; i <= 2; i++) {
+        const line = document.getElementById(`line-${i}`);
+        line.className = 'step-line' + (i < currentStep ? ' done' : '');
+    }
+    const nav = document.getElementById('day-nav');
+    nav.style.display = currentStep === 3 ? 'flex' : 'none';
+}
+
+
+// ── Home page ──────────────────────────────────────────────────────────────────
+
+async function loadSavedPrograms() {
+    if (!token) { savedPrograms = []; return; }
+    try {
+        const res = await fetch('/api/programs', { headers: { Authorization: `Bearer ${token}` } });
+        if (res.ok) savedPrograms = await res.json();
+        else savedPrograms = [];
+    } catch { savedPrograms = []; }
+}
+
+function renderHome() {
+    currentStep = 0;
+    selectedProgram = null;
+    selectedSplit = null;
+    updateStepIndicator();
+
+    const createCard = `
+        <div class="home-create-card" onclick="startCreateProgram()">
+            <div class="home-create-icon">+</div>
+            <div class="home-create-label">Luo uusi<br>treeniohjelma</div>
+        </div>`;
+
+    let savedSection = '';
+    if (savedPrograms.length) {
+        const savedCards = savedPrograms.map(sp => {
+            const prog = programs[sp.program];
+            if (!prog) return '';
+            return `
+                <div class="program-card home-saved-card" onclick="openSavedProgram(${sp.id})">
+                    <button class="home-saved-delete" onclick="deleteSavedProgram(event,${sp.id})" title="Poista">×</button>
+                    <div class="program-card-name">${prog.labelHtml}</div>
+                    <div class="program-card-desc">${sp.split}-jakoinen</div>
+                </div>`;
+        }).join('');
+        savedSection = `
+            <div class="home-section-label">Tallennetut treeniohjelmat</div>
+            <div class="program-slider-wrapper">
+                <button class="carousel-arrow" id="arrow-prev" onclick="carouselPrev()" style="display:none">&#8249;</button>
+                <div class="program-track" id="program-track">${savedCards}${createCard}</div>
+                <button class="carousel-arrow" id="arrow-next" onclick="carouselNext()" style="display:none">&#8250;</button>
+            </div>`;
+    }
+
+    document.getElementById('main-content').innerHTML = `
+        <div class="step-view">
+            <h2 class="step-title">Hei, ${escapeHtml(currentUser)}!</h2>
+            <p class="step-subtitle">Valitse tallennettu ohjelma tai luo uusi.</p>
+            ${savedSection || `<div class="program-slider-wrapper">
+                <div class="program-track" id="program-track">${createCard}</div>
+            </div>`}
+        </div>`;
+
+    setTimeout(initCarousel, 0);
+}
+
+function startCreateProgram() {
+    renderStep1();
+}
+
+function openSavedProgram(id) {
+    const sp = savedPrograms.find(p => p.id === id);
+    if (!sp) return;
+    selectedProgram = sp.program;
+    selectedSplit = sp.split;
+    currentDay = 0;
+    Object.keys(completed).forEach(k => delete completed[k]);
+    renderNav();
+    renderStep3(0);
+}
+
+async function deleteSavedProgram(event, id) {
+    event.stopPropagation();
+    if (!confirm('Poistetaanko ohjelma tallennetuista?')) return;
+    try {
+        const res = await fetch(`/api/programs/${id}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+            savedPrograms = savedPrograms.filter(p => p.id !== id);
+            renderHome();
+        } else {
+            showToast('Poisto epäonnistui', 'error');
+        }
+    } catch { showToast('Yhteysvirhe', 'error'); }
+}
+
+async function saveAndStartProgram() {
+    if (!token || !selectedProgram || !selectedSplit) return;
+    const btn = document.getElementById('start-program-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Tallennetaan…'; }
+    try {
+        const res = await fetch('/api/programs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ program: selectedProgram, split: selectedSplit }),
+        });
+        if (res.ok) {
+            const saved = await res.json();
+            savedPrograms.push(saved);
+            currentDay = 0;
+            Object.keys(completed).forEach(k => delete completed[k]);
+            renderNav();
+            renderStep3(0);
+        } else {
+            showToast('Tallennus epäonnistui', 'error');
+            if (btn) { btn.disabled = false; btn.textContent = 'Aloita treeniohjelma'; }
+        }
+    } catch {
+        showToast('Yhteysvirhe', 'error');
+        if (btn) { btn.disabled = false; btn.textContent = 'Aloita treeniohjelma'; }
+    }
+}
+
+// ── Step 1: Program selection ──────────────────────────────────────────────────
+
+function renderStep1() {
+    currentStep = 1;
+    updateStepIndicator();
+    const main = document.getElementById('main-content');
+    const backToHome = token ? `<button class="back-btn" onclick="renderHome()">← Etusivu</button>` : '';
+
+    main.innerHTML = `
+        <div class="step-view">
+            ${backToHome}
+            <h2 class="step-title">Valitse saliohjelmasi</h2>
+            <p class="step-subtitle">Valitsemasi ohjelmatyyppi määrittää harjoitteiden painotuksen.</p>
+            <div class="program-slider-wrapper">
+                <button class="carousel-arrow" id="arrow-prev" onclick="carouselPrev()" style="display:none">&#8249;</button>
+                <div class="program-track" id="program-track">
+                    ${Object.entries(programs).map(([key, p]) => `
+                        <div class="program-card" onclick="selectProgram('${key}')">
+                            <div class="program-card-name">${p.labelHtml}</div>
+                            <div class="program-card-desc">${p.desc}</div>
+                        </div>`).join('')}
+                </div>
+                <button class="carousel-arrow" id="arrow-next" onclick="carouselNext()" style="display:none">&#8250;</button>
+            </div>
+        </div>`;
+    setTimeout(initCarousel, 0);
+}
+
+function selectProgram(key) {
+    selectedProgram = key;
+    currentDay = 0;
+    Object.keys(completed).forEach(k => delete completed[k]);
+    renderStep2();
+}
+
+// ── Step 2: Split selection ────────────────────────────────────────────────────
+
+function renderStep2() {
+    currentStep = 2;
+    updateStepIndicator();
+    const p = programs[selectedProgram];
+    const main = document.getElementById('main-content');
+    const startBtn = token
+        ? `<button class="save-workout-btn" id="start-program-btn" onclick="saveAndStartProgram()" style="display:none;margin-top:1.5rem">Aloita treeniohjelma</button>`
+        : '';
+    main.innerHTML = `
+        <div class="step-view">
+            <button class="back-btn" onclick="renderStep1()">← Takaisin</button>
+            <div class="breadcrumb">
+                <span class="breadcrumb-item">${p.label}</span>
+                <span class="breadcrumb-sep">›</span>
+                <span class="breadcrumb-item active">Valitse jako</span>
+            </div>
+            <h2 class="step-title">Kuinka monijakoinen?</h2>
+            <p class="step-subtitle">Jako kertoo, kuinka monelle päivälle harjoitteet jakautuvat viikossa.</p>
+            <div class="split-grid">
+                <div class="split-card" onclick="${token ? 'pickSplit(2)' : 'selectSplit(2)'}">
+                    <div class="split-card-number">2</div>
+                    <div class="split-card-name">Kaksijakoinen</div>
+                    <div class="split-card-desc">2 treenikertaa viikossa. Ohjelma aloittelijoille ja kiireisille.</div>
+                </div>
+                <div class="split-card" onclick="${token ? 'pickSplit(3)' : 'selectSplit(3)'}">
+                    <div class="split-card-number">3</div>
+                    <div class="split-card-name">Kolmijakoinen</div>
+                    <div class="split-card-desc">3 treenikertaa viikossa. Hyvä tasapaino levon ja harjoittelun välillä.</div>
+                </div>
+                <div class="split-card" onclick="${token ? 'pickSplit(4)' : 'selectSplit(4)'}">
+                    <div class="split-card-number">4</div>
+                    <div class="split-card-name">Nelijakoinen</div>
+                    <div class="split-card-desc">4 treenikertaa viikossa. Sopii kokeneemmille ja enemmän aikaa treenaavalle.</div>
+                </div>
+            </div>
+            ${startBtn}
+        </div>`;
+}
+
+function pickSplit(n) {
+    selectedSplit = n;
+    document.querySelectorAll('.split-card').forEach((card, i) => {
+        card.classList.toggle('selected', [2, 3, 4][i] === n);
+    });
+    const btn = document.getElementById('start-program-btn');
+    if (btn) btn.style.display = '';
+}
+
+function selectSplit(n) {
+    selectedSplit = n;
+    currentDay = 0;
+    Object.keys(completed).forEach(k => delete completed[k]);
+    renderNav();
+    renderStep3(0);
+}
+
+// ── Step 3: Workout ────────────────────────────────────────────────────────────
+
+function renderNav() {
+    const nav = document.getElementById('day-nav');
+    const days = programs[selectedProgram].splits[selectedSplit];
+    nav.innerHTML = `
+        <div class="day-nav-btns">
+            ${days.map((d, i) => `<button class="day-btn${i === currentDay ? ' active' : ''}" onclick="showDay(${i})">${d.nimi}</button>`).join('')}
+        </div>
+        <div class="ex-indicator" id="ex-indicator"></div>`;
+}
+
+async function renderStep3(idx) {
+    currentStep = 3;
+    currentDay = idx;
+    updateStepIndicator();
+    if (token) await loadLastLogs();
+
+    const main = document.getElementById('main-content');
+    const days = programs[selectedProgram].splits[selectedSplit];
+    const day = days[idx];
+    if (!completed[idx]) completed[idx] = new Set();
+    const p = programs[selectedProgram];
+
+    const loginPrompt = !token
+        ? `<div class="login-prompt">Kirjaudu sisään tallentaaksesi painot ja toistot <button onclick="openModal()">Kirjaudu</button></div>`
+        : '';
+
+    const saveBtn = token
+        ? `<div class="workout-actions">
+            <button class="save-workout-btn" id="finish-btn" onclick="saveLogs(true)">Lopeta ja tallenna</button>
+            <button class="save-log-btn" id="save-btn" onclick="saveLogs(false)">Tallenna tulokset</button>
+           </div>`
+        : '';
+
+    currentExercise = 0;
+
+    const navBtns = token
+        ? `<div style="display:flex;gap:0.5rem;margin-bottom:2rem">
+            <button class="back-btn" onclick="renderHome()" style="margin-bottom:0">⌂ Etusivu</button>
+            <button class="back-btn" onclick="renderStep2()" style="margin-bottom:0">← Vaihda jakoa</button>
+           </div>`
+        : `<button class="back-btn" onclick="renderStep2()">← Vaihda jakoa</button>`;
+
+    main.innerHTML = `
+        <div style="padding-top:1.5rem">
+            ${navBtns}
+            <div class="breadcrumb">
+                <span class="breadcrumb-item">${p.label}</span>
+                <span class="breadcrumb-sep">›</span>
+                <span class="breadcrumb-item">${selectedSplit}-jakoinen</span>
+                <span class="breadcrumb-sep">›</span>
+                <span class="breadcrumb-item active">${day.nimi}</span>
+            </div>
+            <div class="day-header">
+                <h2>${day.nimi}</h2>
+                <p>${day.kuvaus}</p>
+            </div>
+            ${loginPrompt}
+            <div class="day-progress">
+                <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+                <span class="progress-text" id="progress-text">0 / ${day.harjoitukset.length} tehty</span>
+            </div>
+            <div class="ex-nav-bar">
+                <button class="ex-nav-btn" id="ex-prev" onclick="prevExercise()" disabled>&#8249;</button>
+                <div class="ex-dots" id="ex-dots"></div>
+                <button class="ex-nav-btn" id="ex-next" onclick="nextExercise()">&#8250;</button>
+            </div>
+            <div class="exercise-carousel" id="exercise-carousel">
+                <div class="exercise-track" id="exercise-track"></div>
+            </div>
+            ${saveBtn}
+        </div>`;
+
+    renderExercises(idx);
+    document.querySelectorAll('.day-btn').forEach((btn, i) => btn.classList.toggle('active', i === idx));
+}
+
+async function showDay(idx) {
+    await renderStep3(idx);
+}
+
+// ── Auth UI ────────────────────────────────────────────────────────────────────
+
+function escapeHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function updateAuthUI() {
+    const slot = document.getElementById('header-auth');
+    if (currentUser) {
+        slot.innerHTML = `
+            <div class="user-info">
+                <span class="username-badge">${escapeHtml(currentUser)}</span>
+                <button class="logout-btn" onclick="logout()">Kirjaudu ulos</button>
+            </div>`;
+    } else {
+        slot.innerHTML = `<button class="auth-btn" onclick="openModal()">Kirjaudu sisään</button>`;
+    }
+}
+
+function openModal() {
+    document.getElementById('modal-overlay').classList.add('open');
+    setTimeout(() => document.getElementById('auth-username').focus(), 50);
+    clearModalError();
+}
+
+function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('open');
+}
+
+function closeModalOutside(e) {
+    if (e.target.id === 'modal-overlay') closeModal();
+}
+
+function switchTab(tab) {
+    activeTab = tab;
+    clearModalError();
+    document.querySelectorAll('.modal-tab').forEach((btn, i) => {
+        btn.classList.toggle('active', i === (tab === 'login' ? 0 : 1));
+    });
+    document.getElementById('auth-password').autocomplete = tab === 'login' ? 'current-password' : 'new-password';
+    document.getElementById('modal-submit-btn').textContent = tab === 'login' ? 'Kirjaudu sisään' : 'Luo tili';
+}
+
+function clearModalError() {
+    const el = document.getElementById('modal-error');
+    el.textContent = '';
+    el.classList.remove('show');
+}
+
+function showModalError(msg) {
+    const el = document.getElementById('modal-error');
+    el.textContent = msg;
+    el.classList.add('show');
+}
+
+async function submitAuth() {
+    const username = document.getElementById('auth-username').value.trim();
+    const password = document.getElementById('auth-password').value;
+    const btn = document.getElementById('modal-submit-btn');
+
+    if (!username || !password) { showModalError('Täytä kaikki kentät'); return; }
+
+    btn.disabled = true;
+    clearModalError();
+
+    try {
+        const res = await fetch(`/api/${activeTab}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) { showModalError(data.error || 'Jokin meni pieleen'); return; }
+
+        token = data.token;
+        currentUser = data.username;
+        localStorage.setItem('token', token);
+        localStorage.setItem('username', currentUser);
+
+        closeModal();
+        updateAuthUI();
+        await loadSavedPrograms();
+        renderHome();
+        showToast(`Tervetuloa, ${currentUser}!`, 'success');
+    } catch {
+        showModalError('Yhteysvirhe — onko palvelin käynnissä?');
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+function logout() {
+    token = null;
+    currentUser = null;
+    lastLogs = {};
+    savedPrograms = [];
+    localStorage.removeItem('token');
+    localStorage.removeItem('username');
+    updateAuthUI();
+    renderStep1();
+    showToast('Kirjauduttu ulos', 'success');
+}
+
+// ── API ────────────────────────────────────────────────────────────────────────
+
+function splitKey() {
+    return `${selectedProgram}-${selectedSplit}`;
+}
+
+async function loadLastLogs() {
+    if (!token) { lastLogs = {}; return; }
+    try {
+        const res = await fetch(`/api/logs/last?split=${splitKey()}&day_index=${currentDay}`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.status === 401) { logout(); return; }
+        const rows = await res.json();
+        lastLogs = {};
+        rows.forEach(r => { lastLogs[`${r.exercise_index}-${r.set_index}`] = r; });
+    } catch {
+        lastLogs = {};
+    }
+}
+
+function collectSets() {
+    const map = new Map();
+    document.querySelectorAll('.set-input').forEach(inp => {
+        const key = `${inp.dataset.ei}-${inp.dataset.si}`;
+        if (!map.has(key)) map.set(key, { exercise_index: +inp.dataset.ei, set_index: +inp.dataset.si, weight: null, reps: null });
+        const raw = parseFloat(inp.value);
+        const val = inp.value.trim() !== '' && !isNaN(raw) ? raw : null;
+        const entry = map.get(key);
+        if (inp.dataset.type === 'reps') entry.reps = val;
+        if (inp.dataset.type === 'weight') entry.weight = val;
+    });
+    return [...map.values()].filter(s => s.weight !== null || s.reps !== null);
+}
+
+let _autoSaveTimer = null;
+
+function scheduleAutoSave() {
+    if (!token) return;
+    clearTimeout(_autoSaveTimer);
+    _autoSaveTimer = setTimeout(() => saveLogs(false, true), 1500);
+}
+
+async function saveLogs(finish = false, silent = false) {
+    if (!token) return;
+
+    const sets = collectSets();
+    if (!sets.length) {
+        if (!silent) showToast('Ei tallennettavaa — täytä ensin painot tai toistot', 'error');
+        return;
+    }
+
+    if (!silent) {
+        const saveBtn = document.getElementById('save-btn');
+        const finishBtn = document.getElementById('finish-btn');
+        if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Tallennetaan…'; }
+        if (finishBtn) { finishBtn.disabled = true; finishBtn.textContent = 'Tallennetaan…'; }
+    }
+
+    try {
+        const date = new Date().toISOString().split('T')[0];
+        const res = await fetch('/api/logs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ date, split: splitKey(), day_index: currentDay, sets }),
+        });
+
+        if (res.ok) {
+            await loadLastLogs();
+            if (finish) {
+                renderHome();
+                showSuccessOverlay();
+            } else if (!silent) {
+                showToast('Tulokset tallennettu!', 'success');
+            }
+        } else {
+            if (!silent) {
+                const d = await res.json();
+                showToast(d.error || 'Tallennus epäonnistui', 'error');
+            }
+        }
+    } catch {
+        if (!silent) showToast('Yhteysvirhe', 'error');
+    } finally {
+        if (!silent) {
+            const saveBtn = document.getElementById('save-btn');
+            const finishBtn = document.getElementById('finish-btn');
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Tallenna tulokset'; }
+            if (finishBtn) { finishBtn.disabled = false; finishBtn.textContent = 'Lopeta ja tallenna'; }
+        }
+    }
+}
+
+const successMessages = [
+    { title: 'Hienoa!', sub: 'Loistavaa työtä! Kesäkuntoon 2027.' },
+    { title: 'Grrauu!', sub: 'Mikä salikissa/-kolli! Hienoa työtä!' },
+    { title: 'Wau!', sub: 'Noita lihaksia kelpaa esitellä — hyvää työtä!' },
+    { title: 'Sixpack!', sub: 'Se alkaa näkyä jo paidan läpi. Ihan hurjaa!' },
+    { title: 'Legenda!', sub: 'Arnie itse katsoisi sinua pitkään. Mahtavaa!' },
+    { title: 'Beast mode!', sub: 'Sali tärisi jaloissasi. Ansaittu tauko!' },
+    { title: 'Kuka siellä?', sub: 'Tankkityttö/-poika saapuu — treeni tehty!' },
+    { title: 'Taivas rajana!', sub: 'Jokainen sarja vie sinut lähemmäs huippua. Jatka samaan malliin!' },
+    { title: 'Unelmien keho!', sub: 'Peilikuva ei tiedä vielä mitä odottaa sen edessä. Hyvää työtä!' },
+    { title: 'Kova juttu!', sub: 'Sohvaperunat katsovat ikkunasta ihaillen. Jatka niin!' },
+    { title: 'Päivä tehty!', sub: 'Tulevaisuuden sinä kiittää jo tänään. Mahtavaa!' },
+    { title: 'Lihasrakkaus!', sub: 'Proteiini menee nyt juuri sinne, minne pitää. Hyvin tehty!' },
+    { title: 'Täältä pesee!', sub: 'Treenipäiväkirja hymyilee — ja sinäkin saat hymyillä!' },
+    { title: 'Fiilikset!', sub: 'Endorfiinit paukkuvat ja syystä. Loistava suoritus!' },
+    { title: 'Ei stopattu!', sub: 'Väsymys ei voittanut — sinä voitit. Huippujuttu!' },
+    { title: 'Thor soitteli!', sub: 'Hän halusi tietää, voiko lainata treenivinkkisi. Aivan uskomaton taso!' },
+    { title: 'Rauta puhui!', sub: 'Se kuiskasi: "Taas tuli ammattilainen." Ei muuta sanottavaa.' },
+    { title: 'Eye of the Tiger!', sub: 'Rocky soittaa ja haluaa treenata kanssasi. Varaa aika.' },
+    { title: 'Peilikuva järkkyi!', sub: 'Se ei muista nähneensä sinut näin hyvässä kunnossa. Jatka ehdottomasti!' },
+    { title: 'Hauikset humisee!', sub: 'Voidaan melkein kuulla kasvuäänen. Kamalaa — parhaalla mahdollisella tavalla!' },
+    { title: 'Legenda syntyy!', sub: 'Joskus muistellaan tätä päivää: "Se oli se treeni joka muutti kaiken."' },
+    { title: 'Timantti!', sub: 'Timantit muodostuvat paineessa — sinä muodostut treenissä. Loistavaa!' },
+    { title: 'Levytanko nyökkäsi!', sub: 'Se tietää, kuka täällä hallitsee. Ansaittu kunnioitus.' },
+    { title: 'Olkapäät!', sub: 'Ne ovat jo niin leveät, että pian täytyy kääntyä sivuttain ovissa. Ihanaa!' },
+    { title: 'NASA soitti!', sub: 'He haluavat tutkia mistä saat energiasi. Kerro heille: salikurinalaisuus.' },
+    { title: 'Selkä!', sub: 'Se on nyt leveämpi kuin lentotukialuksen kansi. Upeaa kehitystä!' },
+    { title: 'Jalat puhuivat!', sub: 'Ne sanoivat: "Me käytiin siellä, minne muut eivät edes uskalla katsoa."' },
+    { title: 'Tulevan sinän viesti!', sub: '"Kiitos. Tiedät kyllä miksi." — Sinä, muutaman kuukauden kuluttua.' },
+    { title: 'Pumppis!', sub: 'Arnold kutsui sitä "parempi kuin..." — no tiedät kyllä. Mahtava treeni!' },
+    { title: 'Katseet kääntyy!', sub: 'Huomenna kadulla ihmiset miettivät: "Kas, siinä käy selvästi salilla." Aivan oikein.' },
+    { title: 'Olympia kutsuu!', sub: 'Tuomaristo harkitsee uuden sarjan avaamista juuri sinulle. Loistava suoritus!' },
+    { title: 'Voimaa!', sub: 'Tänään lisätyt kilot eivät tienneet mitä odottaa. Nyt ne tietävät.' },
+    { title: 'Fyysiikka!', sub: 'Einstein tutki fysiikkaa. Sinä teet fyysiikkaasi. Molemmat ovat neroja omalla tavallaan.' },
+    { title: 'Lihakset nukkuu!', sub: 'Ne kasvavat unessa tänä yönä. Anna niille ansaittu lepo — he tienasivat sen.' },
+    { title: 'Supersankari!', sub: 'Ei viittaa, ei maskia — pelkkä hikilakki ja sataprosenttinen tahto. Täydellinen.' },
+    { title: 'Kalenteri hymyilee!', sub: 'Se näkee treenimerkinnät ja tietää: täällä tapahtuu isoja asioita.' },
+    { title: 'Jalkaprässi selvisi!', sub: 'Se ei enää samalla tavalla, mutta selvisi. Sinä voitit tänään.' },
+    { title: 'Kuukauden treenaaja!', sub: 'Palkinto menee myös henkisestä lujuudesta — tänään vaati luonnetta.' },
+    { title: 'Sohva odottaa!', sub: 'Mutta se odottaa voittajaa, ei laiskottelija. Sinä ansaitsit sen levan.' },
+    { title: 'Hirvi katsoi!', sub: 'Se näki treenisuorituksesi ikkunasta ja lähti metsään miettimään elämäänsä.' },
+    { title: 'Uudet vaatteet!', sub: 'Vanhat alkavat vähitellen kiristää väärissä kohdissa. Tästä se johtuu!' },
+    { title: 'Puntti paukkuu!', sub: 'Se on tapa sanoa: "Olet tänään kasvattanut sinut hiukan paremmaksi versioksi."' },
+    { title: 'Meteorit!', sub: 'Ne muuttavat maisemaa iskiessään. Sinä muutat vartaloasi treenatessasi. Sama energia.' },
+    { title: 'Suomi Finland perkele!', sub: 'Sisu löytyi taas. Tämä maa kasvattaa kestäviä ihmisiä — sinä olet todistus.' },
+    { title: 'Fitness-guru!', sub: 'Tuntematon kaveri salissa katseli sinua ja otti hiljaa oppimaan. Olet jo opettaja.' },
+    { title: 'Norsut kuulivat!', sub: 'Eläintarhan norsut pyysivät treeniohjeita. Sanottiin olevan "samaa luokkaa".' },
+    { title: 'Kuudes aisti!', sub: 'Ihmisillä on 5 aistia. Sinulla on kuudes: kyky löytää sali silloinkin, kun ei huvita.' },
+    { title: 'Rakennus valmis?', sub: 'Ei vielä — mutta tänään laskettiin yksi tärkeä peruskivi. Mahtava työ!' },
+    { title: 'Hikoilu on taidetta!', sub: 'Picasso maalasi. Sinä hioit vartaloasi. Molemmat mestareita omalla kentällään.' },
+    { title: 'Tähdet linjassa!', sub: 'Harjoitussuunnitelmasi, tahdonvoimasi ja tämä treeni — kaikki täydellisessä harmoniassa.' },
+];
+
+function showSuccessOverlay() {
+    const msg = successMessages[Math.floor(Math.random() * successMessages.length)];
+    document.getElementById('success-title').textContent = msg.title;
+    document.getElementById('success-subtitle').textContent = msg.sub;
+    document.getElementById('success-overlay').classList.add('open');
+}
+
+function closeSuccessOverlay() {
+    document.getElementById('success-overlay').classList.remove('open');
+}
+
+function closeSuccessOutside(e) {
+    if (e.target.id === 'success-overlay') closeSuccessOverlay();
+}
+
+// ── Exercise rendering ─────────────────────────────────────────────────────────
+
+function formatDate(str) {
+    const [y, m, d] = str.split('-');
+    return `${parseInt(d)}.${parseInt(m)}.${y}`;
+}
+
+function renderExercises(idx) {
+    const track = document.getElementById('exercise-track');
+    if (!track) return;
+    const day = programs[selectedProgram].splits[selectedSplit][idx];
+    const total = day.harjoitukset.length;
+    track.innerHTML = '';
+
+    day.harjoitukset.forEach((ex, i) => {
+        const done = completed[idx]?.has(i);
+
+        let lastDate = null;
+        for (let si = 0; si < ex.sets.length; si++) {
+            const log = lastLogs[`${i}-${si}`];
+            if (log?.date) { lastDate = log.date; break; }
+        }
+
+        const setsHtml = token
+            ? `<table class="sets-table">
+                <thead><tr>
+                    <th>Sarja</th>
+                    <th>Toistot</th>
+                    <th class="prev-col-header">Aiempi tulos</th>
+                    <th>Paino (kg)</th>
+                    <th class="prev-col-header">Aiempi tulos</th>
+                </tr></thead>
+                <tbody>${ex.sets.map((s, si) => {
+                    const log = lastLogs[`${i}-${si}`];
+                    const prevReps   = log?.reps   != null ? log.reps   : '<span style="color:var(--border)">—</span>';
+                    const prevWeight = log?.weight  != null ? `${log.weight} kg` : '<span style="color:var(--border)">—</span>';
+                    return `<tr>
+                        <td>${s.sarja}</td>
+                        <td><input class="set-input" inputmode="numeric" type="text"
+                            placeholder="${s.toistot}"
+                            data-ei="${i}" data-si="${si}" data-type="reps"></td>
+                        <td class="prev-col">${prevReps}</td>
+                        <td><input class="set-input" inputmode="decimal" type="number" min="0" max="9999" step="0.5"
+                            placeholder="kg"
+                            data-ei="${i}" data-si="${si}" data-type="weight"></td>
+                        <td class="prev-col">${prevWeight}</td>
+                    </tr>`;
+                }).join('')}</tbody>
+               </table>`
+            : `<table class="sets-table">
+                <thead><tr><th>Sarja</th><th>Toistot</th><th>Paino (kg)</th></tr></thead>
+                <tbody>${ex.sets.map(s => `<tr><td>${s.sarja}</td><td>${s.toistot}</td><td></td></tr>`).join('')}</tbody>
+               </table>`;
+
+        const slide = document.createElement('div');
+        slide.className = 'exercise-slide';
+        slide.innerHTML = `
+            <div class="exercise-slide-card${done ? ' completed' : ''}" data-ex="${i}">
+                <div class="exercise-slide-counter">Liike ${i + 1} / ${total}</div>
+                <div class="exercise-slide-name">${ex.name}</div>
+                <div class="exercise-meta">
+                    <span class="badge primary">${ex.muscles.split(',')[0].trim()}</span>
+                    <span class="badge">${ex.sets.length} sarjaa</span>
+                    ${ex.tauko ? `<span class="badge tauko">Tauko ${ex.tauko}s</span>` : ''}
+                    ${lastDate ? `<span class="badge">Kirjattu ${formatDate(lastDate)}</span>` : ''}
+                </div>
+                ${setsHtml}
+                <button class="complete-toggle ${done ? 'done' : 'todo'}" onclick="toggleComplete(${idx}, ${i}, event)">
+                    ${done ? '✓ Merkitty tehdy' : 'Merkitse tehty'}
+                </button>
+                <details class="instructions-details">
+                    <summary>Suoritustekniikka</summary>
+                    <ol>${ex.instructions.map(step => `<li>${step}</li>`).join('')}</ol>
+                </details>
+            </div>`;
+        track.appendChild(slide);
+    });
+
+    const dotsEl = document.getElementById('ex-dots');
+    if (dotsEl) {
+        dotsEl.innerHTML = day.harjoitukset.map((_, i) => {
+            const isDone = completed[idx]?.has(i);
+            const cls = i === currentExercise ? 'active' : isDone ? 'done' : '';
+            return `<span class="ex-dot ${cls}" onclick="goToExercise(${i})"></span>`;
+        }).join('');
+    }
+
+    updateExerciseNav();
+    updateProgress(idx);
+    setupExerciseSwipe();
+    if (token) {
+        document.querySelectorAll('.set-input').forEach(inp => {
+            inp.addEventListener('input', scheduleAutoSave);
+        });
+    }
+}
+
+function goToExercise(n) {
+    const day = programs[selectedProgram].splits[selectedSplit][currentDay];
+    currentExercise = Math.max(0, Math.min(n, day.harjoitukset.length - 1));
+    const track = document.getElementById('exercise-track');
+    if (track) track.style.transform = `translateX(-${currentExercise * 100}%)`;
+    updateExerciseNav();
+}
+
+function prevExercise() { goToExercise(currentExercise - 1); }
+function nextExercise() { goToExercise(currentExercise + 1); }
+
+function updateExerciseNav() {
+    const day = programs[selectedProgram].splits[selectedSplit][currentDay];
+    const total = day.harjoitukset.length;
+    const ex = day.harjoitukset[currentExercise];
+
+    const prev = document.getElementById('ex-prev');
+    const next = document.getElementById('ex-next');
+    if (prev) prev.disabled = currentExercise === 0;
+    if (next) next.disabled = currentExercise === total - 1;
+
+    document.querySelectorAll('.ex-dot').forEach((dot, i) => {
+        const isDone = completed[currentDay]?.has(i);
+        dot.className = 'ex-dot' + (i === currentExercise ? ' active' : isDone ? ' done' : '');
+    });
+
+    const indicator = document.getElementById('ex-indicator');
+    if (indicator && ex) {
+        indicator.innerHTML = `<strong>${currentExercise + 1} / ${total}</strong> &middot; ${ex.name}`;
+    }
+}
+
+function toggleComplete(dayIdx, exIdx, event) {
+    event?.stopPropagation();
+    if (!completed[dayIdx]) completed[dayIdx] = new Set();
+    if (completed[dayIdx].has(exIdx)) completed[dayIdx].delete(exIdx);
+    else completed[dayIdx].add(exIdx);
+
+    const isDone = completed[dayIdx].has(exIdx);
+    const card = document.querySelector(`.exercise-slide-card[data-ex="${exIdx}"]`);
+    if (card) {
+        card.classList.toggle('completed', isDone);
+        const btn = card.querySelector('.complete-toggle');
+        if (btn) { btn.className = `complete-toggle ${isDone ? 'done' : 'todo'}`; btn.textContent = isDone ? '✓ Merkitty tehty' : 'Merkitse tehty'; }
+    }
+    updateProgress(dayIdx);
+    updateExerciseNav();
+}
+
+let _touchStartX = 0;
+let _touchStartY = 0;
+
+function setupExerciseSwipe() {
+    const el = document.getElementById('exercise-carousel');
+    if (!el || el._swipeReady) return;
+    el._swipeReady = true;
+    el.addEventListener('touchstart', e => {
+        _touchStartX = e.touches[0].clientX;
+        _touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+    el.addEventListener('touchend', e => {
+        const dx = e.changedTouches[0].clientX - _touchStartX;
+        const dy = e.changedTouches[0].clientY - _touchStartY;
+        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 48) {
+            if (dx < 0) nextExercise();
+            else prevExercise();
+        }
+    }, { passive: true });
+}
+
+function updateProgress(idx) {
+    const total = programs[selectedProgram].splits[selectedSplit][idx]?.harjoitukset.length || 0;
+    const done = completed[idx]?.size || 0;
+    const pct = total > 0 ? (done / total) * 100 : 0;
+    const fill = document.getElementById('progress-fill');
+    const text = document.getElementById('progress-text');
+    if (fill) fill.style.width = pct + '%';
+    if (text) text.textContent = `${done} / ${total} tehty`;
+}
+
+// ── Carousel ───────────────────────────────────────────────────────────────────
+
+function initCarousel() {
+    const track = document.getElementById('program-track');
+    if (!track) return;
+    track.addEventListener('scroll', updateCarouselArrows);
+    updateCarouselArrows();
+}
+
+function updateCarouselArrows() {
+    const track = document.getElementById('program-track');
+    const prev = document.getElementById('arrow-prev');
+    const next = document.getElementById('arrow-next');
+    if (!track || !prev || !next) return;
+    const canScrollLeft = track.scrollLeft > 1;
+    const canScrollRight = track.scrollLeft + track.clientWidth < track.scrollWidth - 1;
+    prev.style.display = canScrollLeft ? 'flex' : 'none';
+    next.style.display = canScrollRight ? 'flex' : 'none';
+}
+
+function carouselPrev() {
+    const track = document.getElementById('program-track');
+    if (track) track.scrollBy({ left: -(track.clientWidth / 2), behavior: 'smooth' });
+}
+
+function carouselNext() {
+    const track = document.getElementById('program-track');
+    if (track) track.scrollBy({ left: track.clientWidth / 2, behavior: 'smooth' });
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────────
+
+function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast ${type} show`;
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────────
+
+updateAuthUI();
+if (token) {
+    loadSavedPrograms().then(() => renderHome());
+} else {
+    renderStep1();
+}
+</script>
+
+</body>
+</html>
