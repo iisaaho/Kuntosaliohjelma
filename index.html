@@ -393,6 +393,16 @@
             min-height: 130px;
         }
 
+        .home-create-card-wide {
+            flex: none;
+            width: 100%;
+            flex-direction: row;
+            gap: 1rem;
+            padding: 1.25rem 1.5rem;
+            min-height: auto;
+            text-align: left;
+        }
+
         .home-create-card:hover {
             background: #eff6ff;
             border-color: var(--accent);
@@ -1589,39 +1599,35 @@ function renderHome() {
     updateStepIndicator();
 
     const createCard = `
-        <div class="home-create-card" onclick="startCreateProgram()">
+        <div class="home-section-label">Uusi ohjelma</div>
+        <div class="home-create-card home-create-card-wide" onclick="startCreateProgram()">
             <div class="home-create-icon">+</div>
-            <div class="home-create-label">Luo uusi<br>treeniohjelma</div>
+            <div class="home-create-label">Luo uusi treeniohjelma</div>
         </div>`;
 
-    let savedSection = '';
-    if (savedPrograms.length) {
-        const savedCards = savedPrograms.map(sp => {
-            const prog = programs[sp.program];
-            if (!prog) return '';
-            return `
-                <div class="program-card home-saved-card" onclick="openSavedProgram(${sp.id})">
-                    <button class="home-saved-delete" onclick="deleteSavedProgram(event,${sp.id})" title="Poista">×</button>
-                    <div class="program-card-name">${prog.labelHtml}</div>
-                    <div class="program-card-desc">${sp.split}-jakoinen</div>
-                </div>`;
-        }).join('');
-        savedSection = `
-            <div class="home-section-label">Tallennetut treeniohjelmat</div>
-            <div class="program-slider-wrapper">
-                <button class="carousel-arrow" id="arrow-prev" onclick="carouselPrev()" style="display:none">&#8249;</button>
-                <div class="program-track" id="program-track">${savedCards}${createCard}</div>
-                <button class="carousel-arrow" id="arrow-next" onclick="carouselNext()" style="display:none">&#8250;</button>
-            </div>`;
-    }
+    const savedSection = savedPrograms.length ? `
+        <div class="home-section-label" style="margin-top:2rem">Tallennetut treeniohjelmat</div>
+        <div class="program-list-vertical">
+            ${savedPrograms.map(sp => {
+                const prog = programs[sp.program];
+                if (!prog) return '';
+                return `
+                    <div class="program-card program-card-full home-saved-card" onclick="openSavedProgram(${sp.id})">
+                        <button class="home-saved-delete" onclick="deleteSavedProgram(event,${sp.id})" title="Poista">×</button>
+                        <div>
+                            <div class="program-card-name">${prog.label}</div>
+                            <div class="program-card-desc">${sp.split}-jakoinen</div>
+                        </div>
+                    </div>`;
+            }).join('')}
+        </div>` : '';
 
     document.getElementById('main-content').innerHTML = `
         <div class="step-view">
             <h2 class="step-title">Hei, ${escapeHtml(currentUser)}!</h2>
             <p class="step-subtitle">Valitse tallennettu ohjelma tai luo uusi.</p>
-            ${savedSection || `<div class="program-slider-wrapper">
-                <div class="program-track" id="program-track">${createCard}</div>
-            </div>`}
+            ${createCard}
+            ${savedSection}
         </div>`;
 
     setTimeout(initCarousel, 0);
