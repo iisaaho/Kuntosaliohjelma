@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kuntosaliohjelma</title>
+    <title>Salikissan treeniohjelma</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
@@ -1044,8 +1044,8 @@
 
         @media (max-width: 600px) {
             header { padding: 1rem 1rem 1rem; }
-            .header-top h1 { font-size: 1.1rem; }
-            .header-logo { width: 36px; height: 36px; }
+            .header-top h1 { font-size: 1.3rem; }
+            .header-logo { width: 44px; height: 44px; }
             #app-footer { padding: 0.6rem 1rem; }
             main { padding: 0 1rem 5rem; width: 100%; }
             .program-card { flex: 0 0 calc(50% - 8px); }
@@ -1084,7 +1084,7 @@
 <div class="modal-overlay" id="modal-overlay" onclick="closeModalOutside(event)">
     <div class="modal">
         <div class="modal-header">
-            <h2>Salikissan kuntosaliohjelma</h2>
+            <h2>Salikissan treeniohjelma</h2>
             <div class="modal-tabs">
                 <button class="modal-tab active" onclick="switchTab('login')">Kirjaudu</button>
                 <button class="modal-tab" onclick="switchTab('register')">Rekisteröidy</button>
@@ -1116,7 +1116,7 @@
 <header>
     <div class="header-top" onclick="goHome()">
         <img src="salikissa.png" alt="Salikissa" class="header-logo">
-        <h1>Salikissan kuntosaliohjelma</h1>
+        <h1>Salikissan treeniohjelma</h1>
     </div>
     <div class="step-indicator" id="step-indicator">
         <div class="step-dot active" id="dot-1">1</div>
@@ -2204,9 +2204,6 @@ function renderExercises(idx) {
                     ${lastDate ? `<span class="badge">Kirjattu ${formatDate(lastDate)}</span>` : ''}
                 </div>
                 <div class="sets-table-wrapper">${setsHtml}</div>
-                <button class="complete-toggle ${done ? 'done' : 'todo'}" onclick="toggleComplete(${idx}, ${i}, event)">
-                    ${done ? '✓ Merkitty tehdy' : 'Merkitse tehty'}
-                </button>
                 <details class="instructions-details">
                     <summary>Suoritustekniikka</summary>
                     <ol>${ex.instructions.map(step => `<li>${step}</li>`).join('')}</ol>
@@ -2227,11 +2224,12 @@ function renderExercises(idx) {
     updateExerciseNav();
     updateProgress(idx);
     setupExerciseSwipe();
-    if (token) {
-        document.querySelectorAll('.set-input').forEach(inp => {
-            inp.addEventListener('input', scheduleAutoSave);
+    document.querySelectorAll('.set-input').forEach(inp => {
+        inp.addEventListener('input', () => {
+            autoMarkComplete(inp, idx);
+            if (token) scheduleAutoSave();
         });
-    }
+    });
 }
 
 function goToExercise(n) {
@@ -2264,19 +2262,15 @@ function updateExerciseNav() {
     if (indicator) indicator.innerHTML = '';
 }
 
-function toggleComplete(dayIdx, exIdx, event) {
-    event?.stopPropagation();
+function autoMarkComplete(inp, dayIdx) {
+    const card = inp.closest('.exercise-slide-card');
+    if (!card) return;
+    const exIdx = Number(card.dataset.ex);
+    const hasAnyValue = [...card.querySelectorAll('.set-input')].some(i => i.value.trim() !== '');
     if (!completed[dayIdx]) completed[dayIdx] = new Set();
-    if (completed[dayIdx].has(exIdx)) completed[dayIdx].delete(exIdx);
-    else completed[dayIdx].add(exIdx);
-
-    const isDone = completed[dayIdx].has(exIdx);
-    const card = document.querySelector(`.exercise-slide-card[data-ex="${exIdx}"]`);
-    if (card) {
-        card.classList.toggle('completed', isDone);
-        const btn = card.querySelector('.complete-toggle');
-        if (btn) { btn.className = `complete-toggle ${isDone ? 'done' : 'todo'}`; btn.textContent = isDone ? '✓ Merkitty tehty' : 'Merkitse tehty'; }
-    }
+    if (hasAnyValue) completed[dayIdx].add(exIdx);
+    else completed[dayIdx].delete(exIdx);
+    card.classList.toggle('completed', hasAnyValue);
     updateProgress(dayIdx);
     updateExerciseNav();
 }
