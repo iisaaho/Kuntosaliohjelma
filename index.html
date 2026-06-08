@@ -24,7 +24,10 @@
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        html, body { overflow-x: hidden; max-width: 100%; }
+        html {
+            overflow-x: hidden;
+            width: 100%;
+        }
 
         body {
             background: var(--bg);
@@ -32,13 +35,18 @@
             font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
             min-height: 100vh;
             -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            width: 100%;
+            position: relative;
         }
 
         /* ── Header ── */
         header {
             background: #ffffff;
             border-bottom: 1px solid var(--border);
-            padding: 1.5rem 2rem 1.25rem;
+            padding: 1.5rem 1.25rem 1.25rem;
+            width: 100%;
+            max-width: 100%;
         }
 
         .header-top {
@@ -210,7 +218,7 @@
         }
 
         /* ── Main ── */
-        main { max-width: 760px; margin: 0 auto; padding: 0 1.25rem 4rem; }
+        main { max-width: 760px; width: 100%; margin: 0 auto; padding: 0 1.25rem 4rem; }
 
         /* ── Wizard step views ── */
         .step-view { padding-top: 2.5rem; }
@@ -235,6 +243,9 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            width: 100%;
+            max-width: 100%;
+            overflow: hidden;
         }
 
         .program-track {
@@ -243,6 +254,7 @@
             gap: 1rem;
             overflow-x: hidden;
             scroll-behavior: smooth;
+            min-width: 0;
             padding: 10px 4px;
             margin: -10px -4px;
         }
@@ -527,9 +539,9 @@
         .progress-text { font-size: 0.8rem; color: var(--text-muted); white-space: nowrap; font-weight: 500; }
 
         /* ── Exercise carousel ── */
-        .exercise-carousel { overflow: hidden; touch-action: pan-y; }
-        .exercise-track { display: flex; transition: transform 0.28s cubic-bezier(0.25,0.46,0.45,0.94); }
-        .exercise-slide { flex: 0 0 100%; min-width: 0; }
+        .exercise-carousel { overflow: hidden; touch-action: pan-y; width: 100%; max-width: 100%; }
+        .exercise-track { display: flex; transition: transform 0.28s cubic-bezier(0.25,0.46,0.45,0.94); width: 100%; }
+        .exercise-slide { flex: 0 0 100%; min-width: 0; max-width: 100%; }
 
         .ex-nav-bar {
             display: flex;
@@ -625,8 +637,8 @@
         .complete-toggle.done { background: #10b981; color: white; border-color: #10b981; }
 
         /* ── Sets table ── */
-        .sets-table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        .sets-table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; font-size: 0.875rem; min-width: 340px; }
+        .sets-table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; }
+        .sets-table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; font-size: 0.875rem; }
 
         .sets-table th {
             text-align: left;
