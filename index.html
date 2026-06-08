@@ -24,6 +24,8 @@
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
+        html, body { overflow-x: hidden; max-width: 100%; }
+
         body {
             background: var(--bg);
             color: var(--text);
@@ -623,7 +625,8 @@
         .complete-toggle.done { background: #10b981; color: white; border-color: #10b981; }
 
         /* ── Sets table ── */
-        .sets-table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; font-size: 0.875rem; }
+        .sets-table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .sets-table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; font-size: 0.875rem; min-width: 340px; }
 
         .sets-table th {
             text-align: left;
@@ -989,17 +992,26 @@
 
         @media (max-width: 600px) {
             header { padding: 1.25rem 1rem 1rem; }
-            .header-top h1 { font-size: 1.35rem; }
+            .header-top h1 { font-size: 1.2rem; }
             #app-footer { padding: 0.75rem 1rem; }
+            main { padding: 0 0.75rem 4rem; }
             .program-card { flex: 0 0 calc(50% - 8px); }
+            .program-card-full { padding: 1rem 1.25rem; }
+            .program-list-vertical { gap: 0.75rem; }
             .split-grid { grid-template-columns: 1fr; }
             .step-line { width: 36px; }
             .step-label-gap { width: 36px; }
-            .header-auth-slot { width: auto; }
             .day-btn { padding: 0.55rem 0.9rem; font-size: 0.8rem; }
-            .sets-table th, .sets-table td { padding: 0.6rem 0.5rem; }
-            .exercise-slide-name { font-size: 1.25rem; }
-            .day-header h2 { font-size: 1.4rem; }
+            .sets-table th, .sets-table td { padding: 0.5rem 0.4rem; font-size: 0.8rem; }
+            .set-input { width: 60px; font-size: 0.9rem; }
+            .exercise-slide-name { font-size: 1.2rem; }
+            .day-header h2 { font-size: 1.3rem; }
+            .exercise-slide-card { padding: 1.25rem 1rem 1rem; }
+            .step-view { padding-top: 1.5rem; }
+            .step-title { font-size: 1.4rem; }
+            .save-workout-btn { font-size: 0.78rem; }
+            .breadcrumb { font-size: 0.72rem; }
+            .home-create-card { min-height: 100px; }
         }
     </style>
 </head>
@@ -2144,7 +2156,7 @@ function renderExercises(idx) {
                     ${ex.tauko ? `<span class="badge tauko">Tauko ${ex.tauko}s</span>` : ''}
                     ${lastDate ? `<span class="badge">Kirjattu ${formatDate(lastDate)}</span>` : ''}
                 </div>
-                ${setsHtml}
+                <div class="sets-table-wrapper">${setsHtml}</div>
                 <button class="complete-toggle ${done ? 'done' : 'todo'}" onclick="toggleComplete(${idx}, ${i}, event)">
                     ${done ? '✓ Merkitty tehdy' : 'Merkitse tehty'}
                 </button>
