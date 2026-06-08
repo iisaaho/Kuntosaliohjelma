@@ -2242,9 +2242,7 @@ function updateExerciseNav() {
     });
 
     const indicator = document.getElementById('ex-indicator');
-    if (indicator && ex) {
-        indicator.innerHTML = `<strong>${currentExercise + 1} / ${total}</strong> &middot; ${ex.name}`;
-    }
+    if (indicator) indicator.innerHTML = '';
 }
 
 function toggleComplete(dayIdx, exIdx, event) {
