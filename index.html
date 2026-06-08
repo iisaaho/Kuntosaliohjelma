@@ -1826,14 +1826,6 @@ async function renderStep3(idx) {
     main.innerHTML = `
         <div style="padding-top:1.5rem">
             ${homeBtn}
-            <button class="back-btn" onclick="renderStep2()">← Vaihda jakoa</button>
-            <div class="breadcrumb">
-                <span class="breadcrumb-item">${p.label}</span>
-                <span class="breadcrumb-sep">›</span>
-                <span class="breadcrumb-item">${selectedSplit}-jakoinen</span>
-                <span class="breadcrumb-sep">›</span>
-                <span class="breadcrumb-item active">${day.nimi}</span>
-            </div>
             <div class="day-header">
                 <h2>${day.nimi}</h2>
                 <p>${day.kuvaus}</p>
@@ -2185,7 +2177,6 @@ function renderExercises(idx) {
         slide.className = 'exercise-slide';
         slide.innerHTML = `
             <div class="exercise-slide-card${done ? ' completed' : ''}" data-ex="${i}">
-                <div class="exercise-slide-counter">Liike ${i + 1} / ${total}</div>
                 <div class="exercise-slide-name">${ex.name}</div>
                 <div class="exercise-meta">
                     <span class="badge primary">${ex.muscles.split(',')[0].trim()}</span>
