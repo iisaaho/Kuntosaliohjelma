@@ -42,7 +42,7 @@
         .header-top {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: center;
             margin-bottom: 1.25rem;
         }
 
@@ -52,11 +52,39 @@
             font-weight: 400;
             color: var(--text);
             letter-spacing: -0.5px;
-            flex: 1;
             text-align: center;
         }
 
-        .header-auth-slot { width: 160px; display: flex; justify-content: flex-end; }
+        /* ── App footer ── */
+        #app-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid var(--border);
+            padding: 0.75rem 2rem;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            z-index: 50;
+        }
+
+        /* ── Vertical program list ── */
+        .program-list-vertical {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .program-card-full {
+            flex: none;
+            width: 100%;
+            text-align: left;
+            flex-direction: row;
+            gap: 1rem;
+            padding: 1.25rem 1.5rem;
+        }
 
         .auth-btn {
             background: transparent;
@@ -957,9 +985,12 @@
         .toast.success { background: #059669; }
         .toast.error { background: #dc2626; }
 
+        body { padding-bottom: 70px; }
+
         @media (max-width: 600px) {
             header { padding: 1.25rem 1rem 1rem; }
-            .header-top h1 { font-size: 1.5rem; }
+            .header-top h1 { font-size: 1.35rem; }
+            #app-footer { padding: 0.75rem 1rem; }
             .program-card { flex: 0 0 calc(50% - 8px); }
             .split-grid { grid-template-columns: 1fr; }
             .step-line { width: 36px; }
@@ -1019,11 +1050,7 @@
 
 <header>
     <div class="header-top">
-        <div style="width:160px"></div>
-        <h1>Kuntosaliohjelma</h1>
-        <div class="header-auth-slot" id="header-auth">
-            <button class="auth-btn" onclick="openModal()">Kirjaudu sisään</button>
-        </div>
+        <h1>Salikissan kuntosaliohjelma</h1>
     </div>
     <div class="step-indicator" id="step-indicator">
         <div class="step-dot active" id="dot-1">1</div>
@@ -1043,6 +1070,12 @@
 
 <nav class="day-nav" id="day-nav" style="display:none"></nav>
 <main id="main-content"></main>
+
+<footer id="app-footer">
+    <div id="header-auth">
+        <button class="auth-btn" onclick="openModal()">Kirjaudu sisään</button>
+    </div>
+</footer>
 
 <script>
 // ── Exercise library ──────────────────────────────────────────────────────────
@@ -1617,19 +1650,16 @@ function renderStep1() {
             ${backToHome}
             <h2 class="step-title">Valitse saliohjelmasi</h2>
             <p class="step-subtitle">Valitsemasi ohjelmatyyppi määrittää harjoitteiden painotuksen.</p>
-            <div class="program-slider-wrapper">
-                <button class="carousel-arrow" id="arrow-prev" onclick="carouselPrev()" style="display:none">&#8249;</button>
-                <div class="program-track" id="program-track">
-                    ${Object.entries(programs).map(([key, p]) => `
-                        <div class="program-card" onclick="selectProgram('${key}')">
-                            <div class="program-card-name">${p.labelHtml}</div>
+            <div class="program-list-vertical">
+                ${Object.entries(programs).map(([key, p]) => `
+                    <div class="program-card program-card-full" onclick="selectProgram('${key}')">
+                        <div>
+                            <div class="program-card-name">${p.label}</div>
                             <div class="program-card-desc">${p.desc}</div>
-                        </div>`).join('')}
-                </div>
-                <button class="carousel-arrow" id="arrow-next" onclick="carouselNext()" style="display:none">&#8250;</button>
+                        </div>
+                    </div>`).join('')}
             </div>
         </div>`;
-    setTimeout(initCarousel, 0);
 }
 
 function selectProgram(key) {
