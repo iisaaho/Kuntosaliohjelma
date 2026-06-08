@@ -51,7 +51,16 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            gap: 0.75rem;
             margin-bottom: 1.25rem;
+            cursor: pointer;
+        }
+
+        .header-logo {
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+            flex-shrink: 0;
         }
 
         .header-top h1 {
@@ -1036,6 +1045,7 @@
         @media (max-width: 600px) {
             header { padding: 1rem 1rem 1rem; }
             .header-top h1 { font-size: 1.1rem; }
+            .header-logo { width: 36px; height: 36px; }
             #app-footer { padding: 0.6rem 1rem; }
             main { padding: 0 1rem 5rem; width: 100%; }
             .program-card { flex: 0 0 calc(50% - 8px); }
@@ -1104,8 +1114,9 @@
 <div class="toast" id="toast"></div>
 
 <header>
-    <div class="header-top">
-        <h1 onclick="goHome()" style="cursor:pointer">Salikissan kuntosaliohjelma</h1>
+    <div class="header-top" onclick="goHome()">
+        <img src="salikissa.png" alt="Salikissa" class="header-logo">
+        <h1>Salikissan kuntosaliohjelma</h1>
     </div>
     <div class="step-indicator" id="step-indicator">
         <div class="step-dot active" id="dot-1">1</div>
@@ -1480,12 +1491,20 @@ const DAYS = {
         harjoitukset: [E.takakyykkyKoko, E.penkkipunnerrusTanko, E.lantionnostoKoko, E.ylataljKoko, E.ojentajaMaaten, E.hauiskaantoA, E.garhammerRaise],
     },
     alakroppa_laite: {
-        kuvaus: 'Alakeho — Laitteet',
+        kuvaus: 'Alakeho A — Laitteet',
         harjoitukset: [E.jalkaprässiLaite, E.hackKyykkyLaite, E.polvenKoukistusKone, E.polvenOjennusKone, E.pakarapotkutTalja, E.loitontajaLaite, E.jalkojenNosto90],
     },
+    alakroppa_laite_B: {
+        kuvaus: 'Alakeho B — Laitteet',
+        harjoitukset: [E.jalkaprässiLaite, E.polvenKoukistusKone, E.pakarapotkutTalja, E.lonkkakoukistusKone, E.loitontajaLaite, E.pohjenousuKone, E.garhammerRaise],
+    },
     ylakroppa_laite: {
-        kuvaus: 'Yläkeho — Laitteet',
+        kuvaus: 'Yläkeho A — Laitteet',
         harjoitukset: [E.ylataljaPulldown, E.rintaprassiKone, E.altataljaIstuen, E.sivunostoKone, E.hauiskone, E.ojentajakone, E.vatsarutistusJumppapallo],
+    },
+    ylakroppa_laite_B: {
+        kuvaus: 'Yläkeho B — Laitteet',
+        harjoitukset: [E.altataljaIstuen, E.vinopenkiKone, E.takaolkapaaKone, E.ylataljaPulldown, E.sivunostoKone, E.hauiskone, E.russianTwist],
     },
     kokovartalo_laite: {
         kuvaus: 'Kokovartalo — Laitteet',
@@ -1535,7 +1554,7 @@ const programs = {
         splits: {
             2: [d('Treeni 1', DAYS.alakroppa_laite), d('Treeni 2', DAYS.ylakroppa_laite)],
             3: [d('Treeni 1', DAYS.alakroppa_laite), d('Treeni 2', DAYS.ylakroppa_laite), d('Treeni 3', DAYS.kokovartalo_laite)],
-            4: [d('Treeni 1', DAYS.alakroppa_laite), d('Treeni 2', DAYS.ylakroppa_laite), d('Treeni 3', DAYS.alakroppa_laite), d('Treeni 4', DAYS.ylakroppa_laite)],
+            4: [d('Treeni 1', DAYS.alakroppa_laite), d('Treeni 2', DAYS.ylakroppa_laite), d('Treeni 3', DAYS.alakroppa_laite_B), d('Treeni 4', DAYS.ylakroppa_laite_B)],
         }
     },
 };
