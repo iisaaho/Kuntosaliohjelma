@@ -1,25 +1,23 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const fs = require('fs');
 const path = require('path');
+const { MongoClient } = require('mongodb');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'kuntosali-jwt-secret-vaihda-tuotannossa';
 const ADMIN_KEY = process.env.ADMIN_KEY || 'salikisuli';
-const DB_PATH = path.join(__dirname, 'data.json');
+const MONGODB_URI = process.env.MONGODB_URI || '';
 
-function readDB() {
-  try {
-    return JSON.parse(fs.readFileSync(DB_PATH, 'utf8'));
-  } catch {
-    return { users: [], workout_sets: [] };
-  }
-}
+let _db = null;
 
-function writeDB(data) {
-  fs.writeFileSync(DB_PATH, JSON.stringify(data));
+async function getDB() {
+  if (_db) return _db;
+  const client = new MongoClient(MONGODB_URI);
+  await client.connect();
+  _db = client.db('kuntosaliohjelma');
+  return _db;
 }
 
 // ── Rate limiting ──────────────────────────────────────────────────────────────
@@ -78,129 +76,147 @@ function requireAdmin(req, res, next) {
 
 // ── API ────────────────────────────────────────────────────────────────────────
 
-app.post('/api/register', rateLimit(5, 15 * 60 * 1000), (req, res) => {
-  const { username, password } = req.body ?? {};
-  if (!username?.trim() || !password?.trim())
-    return res.status(400).json({ error: 'Täytä kaikki kentät' });
-  if (username.trim().length < 3)
-    return res.status(400).json({ error: 'Käyttäjänimi liian lyhyt (min 3 merkkiä)' });
-  if (password.length < 6)
-    return res.status(400).json({ error: 'Salasana liian lyhyt (min 6 merkkiä)' });
+app.post('/api/register', rateLimit(5, 15 * 60 * 1000), async (req, res) => {
+  try {
+    const { username, password } = req.body ?? {};
+    if (!username?.trim() || !password?.trim())
+      return res.status(400).json({ error: 'Täytä kaikki kentät' });
+    if (username.trim().length < 3)
+      return res.status(400).json({ error: 'Käyttäjänimi liian lyhyt (min 3 merkkiä)' });
+    if (password.length < 6)
+      return res.status(400).json({ error: 'Salasana liian lyhyt (min 6 merkkiä)' });
 
-  const db = readDB();
-  const name = username.trim();
-  if (db.users.find(u => u.username.toLowerCase() === name.toLowerCase()))
-    return res.status(400).json({ error: 'Käyttäjänimi on jo käytössä' });
+    const db = await getDB();
+    const name = username.trim();
+    const existing = await db.collection('users').findOne({ usernameLower: name.toLowerCase() });
+    if (existing) return res.status(400).json({ error: 'Käyttäjänimi on jo käytössä' });
 
-  const id = Date.now();
-  const hash = bcrypt.hashSync(password, 10);
-  db.users.push({ id, username: name, password: hash });
-  writeDB(db);
+    const id = Date.now();
+    const hash = bcrypt.hashSync(password, 10);
+    await db.collection('users').insertOne({ id, username: name, usernameLower: name.toLowerCase(), password: hash });
 
-  const token = jwt.sign({ id, username: name }, JWT_SECRET, { expiresIn: '30d' });
-  res.json({ token, username: name });
-});
-
-app.post('/api/login', rateLimit(10, 15 * 60 * 1000), (req, res) => {
-  const { username, password } = req.body ?? {};
-  const db = readDB();
-  const user = db.users.find(u => u.username.toLowerCase() === username?.trim().toLowerCase());
-  if (!user || !bcrypt.compareSync(password ?? '', user.password))
-    return res.status(401).json({ error: 'Väärä käyttäjänimi tai salasana' });
-
-  const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '30d' });
-  res.json({ token, username: user.username });
-});
-
-app.get('/api/logs/last', requireAuth, (req, res) => {
-  const { split, day_index } = req.query;
-  const db = readDB();
-
-  const rows = db.workout_sets.filter(s =>
-    s.user_id === req.user.id &&
-    String(s.split) === String(split) &&
-    s.day_index === Number(day_index)
-  ).sort((a, b) => b.date.localeCompare(a.date));
-
-  const latest = new Map();
-  for (const row of rows) {
-    const key = `${row.exercise_index}-${row.set_index}`;
-    if (!latest.has(key)) latest.set(key, row);
+    const token = jwt.sign({ id, username: name }, JWT_SECRET, { expiresIn: '30d' });
+    res.json({ token, username: name });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Palvelinvirhe' });
   }
-  res.json([...latest.values()]);
 });
 
-app.post('/api/logs', requireAuth, (req, res) => {
-  const { date, split, day_index, sets } = req.body ?? {};
-  if (!date || !Array.isArray(sets))
-    return res.status(400).json({ error: 'Virheellinen pyyntö' });
+app.post('/api/login', rateLimit(10, 15 * 60 * 1000), async (req, res) => {
+  try {
+    const { username, password } = req.body ?? {};
+    const db = await getDB();
+    const user = await db.collection('users').findOne({ usernameLower: username?.trim().toLowerCase() });
+    if (!user || !bcrypt.compareSync(password ?? '', user.password))
+      return res.status(401).json({ error: 'Väärä käyttäjänimi tai salasana' });
 
-  const db = readDB();
+    const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '30d' });
+    res.json({ token, username: user.username });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Palvelinvirhe' });
+  }
+});
 
-  for (const s of sets) {
-    const existing = db.workout_sets.findIndex(r =>
-      r.user_id === req.user.id &&
-      r.date === date &&
-      String(r.split) === String(split) &&
-      r.day_index === Number(day_index) &&
-      r.exercise_index === Number(s.exercise_index) &&
-      r.set_index === Number(s.set_index)
-    );
+app.get('/api/logs/last', requireAuth, async (req, res) => {
+  try {
+    const { split, day_index } = req.query;
+    const db = await getDB();
 
-    const entry = {
+    const rows = await db.collection('workout_sets').find({
       user_id: req.user.id,
-      date,
       split: String(split),
       day_index: Number(day_index),
-      exercise_index: Number(s.exercise_index),
-      set_index: Number(s.set_index),
-      weight: s.weight != null ? Number(s.weight) : null,
-      reps: s.reps != null ? Number(s.reps) : null,
-    };
+    }).sort({ date: -1 }).toArray();
 
-    if (existing >= 0) db.workout_sets[existing] = entry;
-    else db.workout_sets.push(entry);
+    const latest = new Map();
+    for (const row of rows) {
+      const key = `${row.exercise_index}-${row.set_index}`;
+      if (!latest.has(key)) latest.set(key, row);
+    }
+    res.json([...latest.values()]);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Palvelinvirhe' });
   }
+});
 
-  writeDB(db);
-  res.json({ ok: true });
+app.post('/api/logs', requireAuth, async (req, res) => {
+  try {
+    const { date, split, day_index, sets } = req.body ?? {};
+    if (!date || !Array.isArray(sets))
+      return res.status(400).json({ error: 'Virheellinen pyyntö' });
+
+    const db = await getDB();
+
+    for (const s of sets) {
+      const filter = {
+        user_id: req.user.id,
+        date,
+        split: String(split),
+        day_index: Number(day_index),
+        exercise_index: Number(s.exercise_index),
+        set_index: Number(s.set_index),
+      };
+      const entry = {
+        ...filter,
+        weight: s.weight != null ? Number(s.weight) : null,
+        reps: s.reps != null ? Number(s.reps) : null,
+      };
+      await db.collection('workout_sets').updateOne(filter, { $set: entry }, { upsert: true });
+    }
+
+    res.json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Palvelinvirhe' });
+  }
 });
 
 // ── User programs ──────────────────────────────────────────────────────────────
 
-app.get('/api/programs', requireAuth, (req, res) => {
-    const db = readDB();
-    const list = (db.user_programs || []).filter(p => p.user_id === req.user.id);
+app.get('/api/programs', requireAuth, async (req, res) => {
+  try {
+    const db = await getDB();
+    const list = await db.collection('user_programs').find({ user_id: req.user.id }).toArray();
     res.json(list);
+  } catch (e) {
+    res.status(500).json({ error: 'Palvelinvirhe' });
+  }
 });
 
-app.post('/api/programs', requireAuth, (req, res) => {
+app.post('/api/programs', requireAuth, async (req, res) => {
+  try {
     const { program, split } = req.body ?? {};
     if (!program || !split) return res.status(400).json({ error: 'Virheellinen pyyntö' });
-    const db = readDB();
-    if (!db.user_programs) db.user_programs = [];
+    const db = await getDB();
     const entry = {
-        id: Date.now(),
-        user_id: req.user.id,
-        program,
-        split: Number(split),
-        created_at: new Date().toISOString().split('T')[0],
+      id: Date.now(),
+      user_id: req.user.id,
+      program,
+      split: Number(split),
+      created_at: new Date().toISOString().split('T')[0],
     };
-    db.user_programs.push(entry);
-    writeDB(db);
+    await db.collection('user_programs').insertOne(entry);
     res.json(entry);
+  } catch (e) {
+    res.status(500).json({ error: 'Palvelinvirhe' });
+  }
 });
 
-app.delete('/api/programs/:id', requireAuth, (req, res) => {
-    const db = readDB();
-    if (!db.user_programs) return res.json({ ok: true });
-    const idx = db.user_programs.findIndex(
-        p => p.id === Number(req.params.id) && p.user_id === req.user.id
-    );
-    if (idx === -1) return res.status(404).json({ error: 'Ohjelmaa ei löydy' });
-    db.user_programs.splice(idx, 1);
-    writeDB(db);
+app.delete('/api/programs/:id', requireAuth, async (req, res) => {
+  try {
+    const db = await getDB();
+    const result = await db.collection('user_programs').deleteOne({
+      id: Number(req.params.id),
+      user_id: req.user.id,
+    });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Ohjelmaa ei löydy' });
     res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: 'Palvelinvirhe' });
+  }
 });
 
 // ── Admin ──────────────────────────────────────────────────────────────────────
@@ -209,48 +225,64 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
-app.get('/api/admin/stats', requireAdmin, (req, res) => {
-  const db = readDB();
-  const sets = db.workout_sets || [];
-  const userPrograms = db.user_programs || [];
+app.get('/api/admin/stats', requireAdmin, async (req, res) => {
+  try {
+    const db = await getDB();
+    const users = await db.collection('users').find().toArray();
+    const sets = await db.collection('workout_sets').find().toArray();
+    const userPrograms = await db.collection('user_programs').find().toArray();
 
-  const now = new Date();
-  const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const now = new Date();
+    const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-  const users = db.users.map(u => {
-    const userSets = sets.filter(s => s.user_id === u.id);
-    const userProgs = userPrograms.filter(p => p.user_id === u.id);
-    const dates = [...new Set(userSets.map(s => s.date))].filter(Boolean).sort();
-    const lastActive = dates.length ? dates[dates.length - 1] : null;
-    return {
-      username: u.username,
-      registeredAt: new Date(u.id).toISOString().split('T')[0],
-      programs: userProgs.length,
-      workoutDays: dates.length,
-      sets: userSets.length,
-      lastActive,
-    };
-  }).sort((a, b) => (b.lastActive || '').localeCompare(a.lastActive || ''));
+    const usersStats = users.map(u => {
+      const userSets = sets.filter(s => s.user_id === u.id);
+      const userProgs = userPrograms.filter(p => p.user_id === u.id);
+      const dates = [...new Set(userSets.map(s => s.date))].filter(Boolean).sort();
+      const lastActive = dates.length ? dates[dates.length - 1] : null;
+      return {
+        username: u.username,
+        registeredAt: new Date(u.id).toISOString().split('T')[0],
+        programs: userProgs.length,
+        workoutDays: dates.length,
+        sets: userSets.length,
+        lastActive,
+      };
+    }).sort((a, b) => (b.lastActive || '').localeCompare(a.lastActive || ''));
 
-  const activeThisMonth = users.filter(u => u.lastActive?.startsWith(thisMonth)).length;
+    const activeThisMonth = usersStats.filter(u => u.lastActive?.startsWith(thisMonth)).length;
 
-  res.json({
-    summary: {
-      totalUsers: db.users.length,
-      totalSets: sets.length,
-      totalPrograms: userPrograms.length,
-      activeThisMonth,
-    },
-    users,
-  });
+    res.json({
+      summary: {
+        totalUsers: users.length,
+        totalSets: sets.length,
+        totalPrograms: userPrograms.length,
+        activeThisMonth,
+      },
+      users: usersStats,
+    });
+  } catch (e) {
+    res.status(500).json({ error: 'Palvelinvirhe' });
+  }
 });
 
 // ── Start ──────────────────────────────────────────────────────────────────────
 
-app.listen(PORT, () => {
-  console.log(`\nKuntosaliohjelma käynnissä: http://localhost:${PORT}\n`);
-  console.log(`─── Admin ───────────────────────────────────────────`);
-  console.log(`URL:    GET http://localhost:${PORT}/api/admin/stats`);
-  console.log(`Header: Authorization: Bearer ${ADMIN_KEY}`);
-  console.log(`────────────────────────────────────────────────────\n`);
-});
+async function start() {
+  try {
+    await getDB();
+    console.log('MongoDB yhteys muodostettu');
+    app.listen(PORT, () => {
+      console.log(`\nKuntosaliohjelma käynnissä: http://localhost:${PORT}\n`);
+      console.log(`─── Admin ───────────────────────────────────────────`);
+      console.log(`URL:    GET http://localhost:${PORT}/api/admin/stats`);
+      console.log(`Header: Authorization: Bearer ${ADMIN_KEY}`);
+      console.log(`────────────────────────────────────────────────────\n`);
+    });
+  } catch (e) {
+    console.error('Tietokantayhteys epäonnistui:', e.message);
+    process.exit(1);
+  }
+}
+
+start();
