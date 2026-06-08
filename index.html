@@ -1530,9 +1530,9 @@ function goHome() {
 }
 
 function updateStepIndicator() {
-    const onHome = currentStep === 0;
-    document.getElementById('step-indicator').style.display = onHome ? 'none' : '';
-    document.getElementById('step-label-row').style.display = onHome ? 'none' : '';
+    const showIndicator = currentStep === 1 || currentStep === 2;
+    document.getElementById('step-indicator').style.display = showIndicator ? '' : 'none';
+    document.getElementById('step-label-row').style.display = showIndicator ? '' : 'none';
 
     for (let i = 1; i <= 3; i++) {
         const dot = document.getElementById(`dot-${i}`);
