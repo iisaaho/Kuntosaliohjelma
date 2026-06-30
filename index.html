@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #f5f8ff;
+            --bg: #ffffff;
             --surface: #ffffff;
             --surface2: #eff6ff;
             --accent: #1e40af;
@@ -758,6 +758,99 @@
             line-height: 1.7;
         }
         .instructions-details li + li { margin-top: 0.2rem; }
+
+        /* ── Comment field ── */
+        .exercise-comment {
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.85rem;
+            font-family: inherit;
+            resize: none;
+            min-height: 58px;
+            margin-top: 0.75rem;
+            color: var(--text);
+            background: var(--surface2);
+        }
+        .exercise-comment:focus {
+            outline: none;
+            border-color: var(--accent2);
+            background: white;
+        }
+
+        /* ── Bottom exercise navigation ── */
+        .ex-bottom-nav {
+            display: flex;
+            justify-content: space-between;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+        .ex-nav-large {
+            flex: 1;
+            padding: 0.8rem;
+            font-size: 1.6rem;
+            line-height: 1;
+            background: white;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            color: var(--text);
+            transition: border-color 0.15s, color 0.15s;
+        }
+        .ex-nav-large:disabled { opacity: 0.3; cursor: default; }
+        .ex-nav-large:not(:disabled):hover { border-color: var(--accent2); color: var(--accent); }
+
+        /* ── Calendar ── */
+        .calendar-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 0.5rem;
+        }
+        .cal-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .cal-nav button {
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.2rem 0.65rem;
+            cursor: pointer;
+            font-size: 1.1rem;
+            color: var(--text);
+        }
+        .cal-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 3px;
+        }
+        .cal-day-header {
+            text-align: center;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            padding: 0.2rem 0;
+        }
+        .cal-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.78rem;
+            border-radius: 6px;
+            color: var(--text);
+        }
+        .cal-day.workout { background: #10b981; color: white; font-weight: 600; }
+        .cal-day.today { outline: 2px solid var(--accent); outline-offset: -1px; font-weight: 700; }
+        .cal-day.workout.today { outline-color: #065f46; }
 
         /* ── Save button ── */
         .workout-actions {
@@ -1568,6 +1661,7 @@ let currentDay = 0;
 let currentExercise = 0;
 const completed = {};
 let lastLogs = {};
+let lastComments = {};
 let savedPrograms = [];
 
 let token = localStorage.getItem('token');
@@ -1611,6 +1705,67 @@ async function loadSavedPrograms() {
     } catch { savedPrograms = []; }
 }
 
+// ── Calendar ──────────────────────────────────────────────────────────────────
+
+let _calYear = new Date().getFullYear();
+let _calMonth = new Date().getMonth();
+let _calDates = new Set();
+
+async function loadAndRenderCalendar() {
+    try {
+        const res = await fetch('/api/logs/dates', { headers: { Authorization: `Bearer ${token}` } });
+        if (!res.ok) return;
+        _calDates = new Set(await res.json());
+    } catch { return; }
+    const section = document.getElementById('calendar-section');
+    if (section) section.innerHTML = buildCalendarHTML(_calYear, _calMonth);
+}
+
+function buildCalendarHTML(year, month) {
+    const monthNames = ['Tammikuu','Helmikuu','Maaliskuu','Huhtikuu','Toukokuu','Kesäkuu','Heinäkuu','Elokuu','Syyskuu','Lokakuu','Marraskuu','Joulukuu'];
+    const dayHeaders = ['Ma','Ti','Ke','To','Pe','La','Su'];
+    const today = new Date().toISOString().split('T')[0];
+    let startDow = new Date(year, month, 1).getDay();
+    startDow = startDow === 0 ? 6 : startDow - 1;
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const workoutsThisMonth = [..._calDates].filter(d => d.startsWith(`${year}-${String(month+1).padStart(2,'0')}`)).length;
+
+    let cells = dayHeaders.map(d => `<div class="cal-day-header">${d}</div>`).join('');
+    for (let i = 0; i < startDow; i++) cells += `<div class="cal-day"></div>`;
+    for (let d = 1; d <= daysInMonth; d++) {
+        const ds = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const cls = (_calDates.has(ds) ? ' workout' : '') + (ds === today ? ' today' : '');
+        cells += `<div class="cal-day${cls}">${d}</div>`;
+    }
+
+    const nowY = new Date().getFullYear(), nowM = new Date().getMonth();
+    const canNext = year < nowY || (year === nowY && month < nowM);
+
+    return `
+        <div class="home-section-label" style="margin-top:2rem">Treenikalenteri</div>
+        <div class="calendar-card">
+            <div class="cal-nav">
+                <button onclick="prevCalMonth()">&#8249;</button>
+                <span>${monthNames[month]} ${year}${workoutsThisMonth ? ` · ${workoutsThisMonth} treeniä` : ''}</span>
+                <button onclick="nextCalMonth()" ${canNext ? '' : 'disabled style="opacity:0.3"'}>&#8250;</button>
+            </div>
+            <div class="cal-grid">${cells}</div>
+        </div>`;
+}
+
+function prevCalMonth() {
+    _calMonth--; if (_calMonth < 0) { _calMonth = 11; _calYear--; }
+    const s = document.getElementById('calendar-section');
+    if (s) s.innerHTML = buildCalendarHTML(_calYear, _calMonth);
+}
+function nextCalMonth() {
+    const nowY = new Date().getFullYear(), nowM = new Date().getMonth();
+    if (_calYear > nowY || (_calYear === nowY && _calMonth >= nowM)) return;
+    _calMonth++; if (_calMonth > 11) { _calMonth = 0; _calYear++; }
+    const s = document.getElementById('calendar-section');
+    if (s) s.innerHTML = buildCalendarHTML(_calYear, _calMonth);
+}
+
 function renderHome() {
     currentStep = 0;
     selectedProgram = null;
@@ -1647,9 +1802,11 @@ function renderHome() {
             <p class="step-subtitle">Valitse tallennettu ohjelma tai luo uusi.</p>
             ${createCard}
             ${savedSection}
+            <div id="calendar-section"></div>
         </div>`;
 
     setTimeout(initCarousel, 0);
+    loadAndRenderCalendar();
 }
 
 function startCreateProgram() {
@@ -1817,7 +1974,7 @@ async function renderStep3(idx) {
     currentStep = 3;
     currentDay = idx;
     updateStepIndicator();
-    if (token) await loadLastLogs();
+    if (token) await Promise.all([loadLastLogs(), loadLastComments()]);
 
     const main = document.getElementById('main-content');
     const days = programs[selectedProgram].splits[selectedSplit];
@@ -1832,7 +1989,6 @@ async function renderStep3(idx) {
     const saveBtn = token
         ? `<div class="workout-actions">
             <button class="save-workout-btn" id="finish-btn" onclick="saveLogs(true)">Lopeta ja tallenna</button>
-            <button class="save-log-btn" id="save-btn" onclick="saveLogs(false)">Tallenna tulokset</button>
            </div>`
         : '';
 
@@ -1855,12 +2011,14 @@ async function renderStep3(idx) {
                 <span class="progress-text" id="progress-text">0 / ${day.harjoitukset.length} tehty</span>
             </div>
             <div class="ex-nav-bar">
-                <button class="ex-nav-btn" id="ex-prev" onclick="prevExercise()" disabled>&#8249;</button>
                 <div class="ex-dots" id="ex-dots"></div>
-                <button class="ex-nav-btn" id="ex-next" onclick="nextExercise()">&#8250;</button>
             </div>
             <div class="exercise-carousel" id="exercise-carousel">
                 <div class="exercise-track" id="exercise-track"></div>
+            </div>
+            <div class="ex-bottom-nav">
+                <button class="ex-nav-large" id="ex-prev" onclick="prevExercise()" disabled>&#8249;</button>
+                <button class="ex-nav-large" id="ex-next" onclick="nextExercise()">&#8250;</button>
             </div>
             ${saveBtn}
         </div>`;
@@ -1998,6 +2156,33 @@ async function loadLastLogs() {
     }
 }
 
+async function loadLastComments() {
+    if (!token) { lastComments = {}; return; }
+    try {
+        const res = await fetch(`/api/comments?split=${splitKey()}&day_index=${currentDay}`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) { lastComments = {}; return; }
+        const rows = await res.json();
+        lastComments = {};
+        rows.forEach(r => { lastComments[r.exercise_index] = r.comment; });
+    } catch {
+        lastComments = {};
+    }
+}
+
+async function saveComment(textarea) {
+    if (!token) return;
+    const ei = Number(textarea.dataset.ei);
+    try {
+        await fetch('/api/comments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ split: splitKey(), day_index: currentDay, exercise_index: ei, comment: textarea.value }),
+        });
+    } catch { /* ignore */ }
+}
+
 function collectSets() {
     const map = new Map();
     document.querySelectorAll('.set-input').forEach(inp => {
@@ -2030,9 +2215,7 @@ async function saveLogs(finish = false, silent = false) {
     }
 
     if (!silent) {
-        const saveBtn = document.getElementById('save-btn');
         const finishBtn = document.getElementById('finish-btn');
-        if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Tallennetaan…'; }
         if (finishBtn) { finishBtn.disabled = true; finishBtn.textContent = 'Tallennetaan…'; }
     }
 
@@ -2062,9 +2245,7 @@ async function saveLogs(finish = false, silent = false) {
         if (!silent) showToast('Yhteysvirhe', 'error');
     } finally {
         if (!silent) {
-            const saveBtn = document.getElementById('save-btn');
             const finishBtn = document.getElementById('finish-btn');
-            if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Tallenna tulokset'; }
             if (finishBtn) { finishBtn.disabled = false; finishBtn.textContent = 'Lopeta ja tallenna'; }
         }
     }
@@ -2123,8 +2304,13 @@ const successMessages = [
     { title: 'Tähdet linjassa!', sub: 'Harjoitussuunnitelmasi, tahdonvoimasi ja tämä treeni — kaikki täydellisessä harmoniassa.' },
 ];
 
+let _lastSuccessIdx = -1;
 function showSuccessOverlay() {
-    const msg = successMessages[Math.floor(Math.random() * successMessages.length)];
+    let idx;
+    do { idx = Math.floor(Math.random() * successMessages.length); }
+    while (idx === _lastSuccessIdx && successMessages.length > 1);
+    _lastSuccessIdx = idx;
+    const msg = successMessages[idx];
     document.getElementById('success-title').textContent = msg.title;
     document.getElementById('success-subtitle').textContent = msg.sub;
     document.getElementById('success-overlay').classList.add('open');
@@ -2204,6 +2390,7 @@ function renderExercises(idx) {
                     ${lastDate ? `<span class="badge">Kirjattu ${formatDate(lastDate)}</span>` : ''}
                 </div>
                 <div class="sets-table-wrapper">${setsHtml}</div>
+                ${token ? `<textarea class="exercise-comment" placeholder="Muistiinpano (esim. lisää painoa ensi kerralla)..." data-ei="${i}">${escapeHtml(lastComments[i] || '')}</textarea>` : ''}
                 <details class="instructions-details">
                     <summary>Suoritustekniikka</summary>
                     <ol>${ex.instructions.map(step => `<li>${step}</li>`).join('')}</ol>
@@ -2229,6 +2416,9 @@ function renderExercises(idx) {
             autoMarkComplete(inp, idx);
             if (token) scheduleAutoSave();
         });
+    });
+    document.querySelectorAll('.exercise-comment').forEach(ta => {
+        ta.addEventListener('blur', () => saveComment(ta));
     });
 }
 

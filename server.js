@@ -219,6 +219,60 @@ app.delete('/api/programs/:id', requireAuth, async (req, res) => {
   }
 });
 
+// ── Comments ──────────────────────────────────────────────────────────────────
+
+app.get('/api/comments', requireAuth, async (req, res) => {
+  try {
+    const { split, day_index } = req.query;
+    const db = await getDB();
+    const comments = await db.collection('exercise_comments').find({
+      user_id: req.user.id,
+      split: String(split),
+      day_index: Number(day_index),
+    }).toArray();
+    res.json(comments);
+  } catch (e) {
+    res.status(500).json({ error: 'Palvelinvirhe' });
+  }
+});
+
+app.post('/api/comments', requireAuth, async (req, res) => {
+  try {
+    const { split, day_index, exercise_index, comment } = req.body ?? {};
+    const db = await getDB();
+    const filter = {
+      user_id: req.user.id,
+      split: String(split),
+      day_index: Number(day_index),
+      exercise_index: Number(exercise_index),
+    };
+    if (comment?.trim()) {
+      await db.collection('exercise_comments').updateOne(filter, { $set: { ...filter, comment: comment.trim() } }, { upsert: true });
+    } else {
+      await db.collection('exercise_comments').deleteOne(filter);
+    }
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: 'Palvelinvirhe' });
+  }
+});
+
+// ── Workout dates for calendar ─────────────────────────────────────────────────
+
+app.get('/api/logs/dates', requireAuth, async (req, res) => {
+  try {
+    const db = await getDB();
+    const sets = await db.collection('workout_sets').find(
+      { user_id: req.user.id },
+      { projection: { date: 1 } }
+    ).toArray();
+    const dates = [...new Set(sets.map(s => s.date).filter(Boolean))].sort();
+    res.json(dates);
+  } catch (e) {
+    res.status(500).json({ error: 'Palvelinvirhe' });
+  }
+});
+
 // ── Admin ──────────────────────────────────────────────────────────────────────
 
 app.get('/admin', (req, res) => {
