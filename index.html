@@ -1354,6 +1354,10 @@ const E = {
         sets:[{sarja:1,toistot:'10–12',paino:'Oma paino / lisäpaino'},{sarja:2,toistot:'10–12',paino:'Sama'},{sarja:3,toistot:'10–12',paino:'Sama'}],
         instructions:['Seiso portaan reunalla tai tasaisella alustalla.','Nouse varpaiden päälle mahdollisimman korkealle.','Pidä yläasento hetken.','Laske hallitusti alas — kantapäät voivat laskea alustaa alemmas.'] },
 
+    selanOjennus: { name:'Selän ojennus (hyperextension)', muscles:'Alaselkä, Pakarat, Takareidet', tauko:60,
+        sets:[{sarja:1,toistot:'10–15',paino:'Oma keho'},{sarja:2,toistot:'10–15',paino:'Oma keho'},{sarja:3,toistot:'10–15',paino:'Oma keho'}],
+        instructions:['Asetu selänojennuslaitteeseen niin, että lonkkataipu on tukipöydän päällä.','Laske ylävartaloa alaspäin kontrolloidusti.','Nosta ylävartaloa ylös alaselän ja pakaroiden voimalla.','Älä yliojenna — selkä jää vaakasuoraan tai kevyesti yläviistoon.'] },
+
     // ── Ylakroppa — vapaat painot ──────────────────────────────────────────────
 
     penkkipunnerrusTanko: { name:'Penkkipunnerrus (tanko)', muscles:'Rintakehä, Ojentajalihas, Etuhartia', tauko:90,
@@ -1636,7 +1640,7 @@ const DAYS = {
     },
     alakroppa_B: {
         kuvaus: 'Alakeho — Pakarat & Takareidet',
-        harjoitukset: [E.lantionnosto, E.yhdenJalanMd, E.bulgarialainenAskelkyykky, E.gluteStepUp, E.polvenKoukistus4, E.pohjenostotSeisten, E.deadBug],
+        harjoitukset: [E.lantionnosto, E.yhdenJalanMd, E.bulgarialainenAskelkyykky, E.gluteStepUp, E.pakarapotkutTalja, E.selanOjennus, E.deadBug],
     },
     ylakroppa_A: {
         kuvaus: 'Yläkeho — Penkki & Soutu',
@@ -1644,7 +1648,7 @@ const DAYS = {
     },
     ylakroppa_B: {
         kuvaus: 'Yläkeho — Hartiat & Leuanveto',
-        harjoitukset: [E.pystypunnerrusTankoSeisten, E.leuanvetoB, E.vinopenkkipunnerrus, E.kulmasoutuYhdella, E.sivunostoKaapeli, E.facepull, E.russianTwist],
+        harjoitukset: [E.vinopenkkipunnerrus, E.leuanvetoB, E.kulmasoutuYhdella, E.sivunostoKaapeli, E.facepull, E.ojentajaMaaten, E.russianTwist],
     },
     kokovartalo: {
         kuvaus: 'Kokovartalo — Koko keho',
@@ -1652,19 +1656,19 @@ const DAYS = {
     },
     alakroppa_laite: {
         kuvaus: 'Alakeho A — Laitteet',
-        harjoitukset: [E.jalkaprässiLaite, E.hackKyykkyLaite, E.polvenKoukistusKone, E.polvenOjennusKone, E.pakarapotkutTalja, E.loitontajaLaite, E.jalkojenNosto90],
+        harjoitukset: [E.jalkaprässiLaite, E.hackKyykkyLaite, E.polvenOjennusKone, E.pakarapotkutTalja, E.loitontajaLaite, E.jalkojenNosto90],
     },
     alakroppa_laite_B: {
         kuvaus: 'Alakeho B — Laitteet',
-        harjoitukset: [E.jalkaprässiLaite, E.polvenKoukistusKone, E.pakarapotkutTalja, E.lonkkakoukistusKone, E.loitontajaLaite, E.pohjenousuKone, E.garhammerRaise],
+        harjoitukset: [E.jalkaprässiLaite, E.polvenKoukistusKone, E.lonkkakoukistusKone, E.pohjenousuKone, E.garhammerRaise, E.linkkuveitsi],
     },
     ylakroppa_laite: {
         kuvaus: 'Yläkeho A — Laitteet',
-        harjoitukset: [E.ylataljaPulldown, E.rintaprassiKone, E.altataljaIstuen, E.sivunostoKone, E.hauiskone, E.ojentajakone, E.vatsarutistusJumppapallo],
+        harjoitukset: [E.ylataljaPulldown, E.rintaprassiKone, E.sivunostoKone, E.hauiskone, E.ojentajakone, E.vatsarutistusJumppapallo],
     },
     ylakroppa_laite_B: {
         kuvaus: 'Yläkeho B — Laitteet',
-        harjoitukset: [E.altataljaIstuen, E.vinopenkiKone, E.takaolkapaaKone, E.ylataljaPulldown, E.sivunostoKone, E.hauiskone, E.russianTwist],
+        harjoitukset: [E.altataljaIstuen, E.vinopenkiKone, E.takaolkapaaKone, E.hauiskone, E.ojentajakone, E.russianTwist],
     },
     kokovartalo_laite: {
         kuvaus: 'Kokovartalo — Laitteet',
