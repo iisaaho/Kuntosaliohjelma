@@ -848,9 +848,66 @@
             border-radius: 6px;
             color: var(--text);
         }
-        .cal-day.workout { background: #10b981; color: white; font-weight: 600; }
+        .cal-day.workout { background: #10b981; color: white; font-weight: 600; cursor: pointer; }
+        .cal-day.workout:hover { background: #059669; }
         .cal-day.today { outline: 2px solid var(--accent); outline-offset: -1px; font-weight: 700; }
         .cal-day.workout.today { outline-color: #065f46; }
+
+        /* ── Calendar detail popup ── */
+        .cal-detail-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15,23,42,0.45);
+            z-index: 200;
+            align-items: flex-end;
+            justify-content: center;
+        }
+        .cal-detail-overlay.open { display: flex; }
+        .cal-detail-sheet {
+            background: white;
+            border-radius: 16px 16px 0 0;
+            padding: 1.5rem 1.25rem 2rem;
+            width: 100%;
+            max-width: 540px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .cal-detail-date {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+        .cal-detail-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 1rem;
+        }
+        .cal-detail-exercises {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+        .cal-detail-exercises li {
+            font-size: 0.9rem;
+            color: var(--text);
+            padding: 0.45rem 0.75rem;
+            background: var(--surface2);
+            border-radius: 8px;
+        }
+        .cal-detail-close {
+            width: 100%;
+            margin-top: 1.25rem;
+            padding: 0.8rem;
+            background: var(--text);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
 
         /* ── Save button ── */
         .workout-actions {
@@ -1170,6 +1227,16 @@
         <div class="success-title" id="success-title">Hienoa!</div>
         <div class="success-subtitle" id="success-subtitle">Treeni on tallennettu.</div>
         <button class="success-close-btn" onclick="closeSuccessOverlay()">Sulje</button>
+    </div>
+</div>
+
+<!-- Calendar detail popup -->
+<div class="cal-detail-overlay" id="cal-detail-overlay" onclick="closeCalDetail(event)">
+    <div class="cal-detail-sheet">
+        <div class="cal-detail-date" id="cal-detail-date"></div>
+        <div class="cal-detail-title" id="cal-detail-title"></div>
+        <ul class="cal-detail-exercises" id="cal-detail-exercises"></ul>
+        <button class="cal-detail-close" onclick="closeCalDetailBtn()">Sulje</button>
     </div>
 </div>
 
@@ -1710,12 +1777,16 @@ async function loadSavedPrograms() {
 let _calYear = new Date().getFullYear();
 let _calMonth = new Date().getMonth();
 let _calDates = new Set();
+let _calDateInfo = {};
 
 async function loadAndRenderCalendar() {
     try {
         const res = await fetch('/api/logs/dates', { headers: { Authorization: `Bearer ${token}` } });
         if (!res.ok) return;
-        _calDates = new Set(await res.json());
+        const rows = await res.json();
+        _calDates = new Set(rows.map(r => r.date));
+        _calDateInfo = {};
+        rows.forEach(r => { _calDateInfo[r.date] = r; });
     } catch { return; }
     const section = document.getElementById('calendar-section');
     if (section) section.innerHTML = buildCalendarHTML(_calYear, _calMonth);
@@ -1734,8 +1805,10 @@ function buildCalendarHTML(year, month) {
     for (let i = 0; i < startDow; i++) cells += `<div class="cal-day"></div>`;
     for (let d = 1; d <= daysInMonth; d++) {
         const ds = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-        const cls = (_calDates.has(ds) ? ' workout' : '') + (ds === today ? ' today' : '');
-        cells += `<div class="cal-day${cls}">${d}</div>`;
+        const isWorkout = _calDates.has(ds);
+        const cls = (isWorkout ? ' workout' : '') + (ds === today ? ' today' : '');
+        const click = isWorkout ? `onclick="openCalDetail('${ds}')"` : '';
+        cells += `<div class="cal-day${cls}" ${click}>${d}</div>`;
     }
 
     const nowY = new Date().getFullYear(), nowM = new Date().getMonth();
@@ -1751,6 +1824,31 @@ function buildCalendarHTML(year, month) {
             </div>
             <div class="cal-grid">${cells}</div>
         </div>`;
+}
+
+function openCalDetail(dateStr) {
+    const info = _calDateInfo[dateStr];
+    if (!info) return;
+
+    const [progKey, splitNum] = info.split.split(/-(?=\d+$)/);
+    const prog = programs[progKey];
+    const day = prog?.splits?.[Number(splitNum)]?.[info.day_index];
+    if (!day) return;
+
+    const [y, m, d] = dateStr.split('-');
+    const monthNames = ['tammikuuta','helmikuuta','maaliskuuta','huhtikuuta','toukokuuta','kesäkuuta','heinäkuuta','elokuuta','syyskuuta','lokakuuta','marraskuuta','joulukuuta'];
+    document.getElementById('cal-detail-date').textContent = `${parseInt(d)}. ${monthNames[parseInt(m)-1]} ${y}`;
+    document.getElementById('cal-detail-title').textContent = `${prog.label} · ${day.nimi}`;
+    document.getElementById('cal-detail-exercises').innerHTML = day.harjoitukset
+        .map(ex => `<li>${ex.name}</li>`).join('');
+    document.getElementById('cal-detail-overlay').classList.add('open');
+}
+
+function closeCalDetailBtn() {
+    document.getElementById('cal-detail-overlay').classList.remove('open');
+}
+function closeCalDetail(e) {
+    if (e.target.id === 'cal-detail-overlay') closeCalDetailBtn();
 }
 
 function prevCalMonth() {

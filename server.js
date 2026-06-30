@@ -264,10 +264,14 @@ app.get('/api/logs/dates', requireAuth, async (req, res) => {
     const db = await getDB();
     const sets = await db.collection('workout_sets').find(
       { user_id: req.user.id },
-      { projection: { date: 1 } }
+      { projection: { date: 1, split: 1, day_index: 1 } }
     ).toArray();
-    const dates = [...new Set(sets.map(s => s.date).filter(Boolean))].sort();
-    res.json(dates);
+    const dateMap = new Map();
+    for (const s of sets) {
+      if (!s.date) continue;
+      if (!dateMap.has(s.date)) dateMap.set(s.date, { date: s.date, split: s.split, day_index: s.day_index });
+    }
+    res.json([...dateMap.values()].sort((a, b) => a.date.localeCompare(b.date)));
   } catch (e) {
     res.status(500).json({ error: 'Palvelinvirhe' });
   }
