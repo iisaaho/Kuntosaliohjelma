@@ -1044,8 +1044,7 @@
             letter-spacing: 0.01em;
         }
 
-        .pr-col { width: 1.6rem; text-align: center; padding: 0 !important; }
-        .pr-star { display: none; font-size: 1rem; line-height: 1; }
+        .pr-star { display: none; font-size: 1.1rem; margin-left: 0.4rem; vertical-align: middle; }
         .pr-star.visible { display: inline; }
 
         /* ── Modal ── */
@@ -2341,17 +2340,22 @@ async function saveComment(textarea) {
 
 function updatePR(inp) {
     const ei = inp.dataset.ei;
-    const si = inp.dataset.si;
     const exName = inp.dataset.ename;
-    const log = lastLogs[`${exName}-${si}`];
-    const star = document.getElementById(`pr-${ei}-${si}`);
-    if (!star || !log) return;
-    const repInp = document.querySelector(`.set-input[data-ei="${ei}"][data-si="${si}"][data-type="reps"]`);
-    const wtInp  = document.querySelector(`.set-input[data-ei="${ei}"][data-si="${si}"][data-type="weight"]`);
-    const curReps   = repInp?.value.trim() !== '' ? parseFloat(repInp.value) : null;
-    const curWeight = wtInp?.value.trim()  !== '' ? parseFloat(wtInp.value)  : null;
-    const isPR = (log.reps   != null && curReps   != null && curReps   > log.reps)
-              || (log.weight != null && curWeight != null && curWeight > log.weight);
+    const star = document.getElementById(`pr-${ei}`);
+    if (!star) return;
+    let isPR = false;
+    document.querySelectorAll(`.set-input[data-ei="${ei}"][data-type="reps"]`).forEach(repInp => {
+        const si = repInp.dataset.si;
+        const log = lastLogs[`${exName}-${si}`];
+        if (!log) return;
+        const wtInp = document.querySelector(`.set-input[data-ei="${ei}"][data-si="${si}"][data-type="weight"]`);
+        const curReps   = repInp.value.trim() !== '' ? parseFloat(repInp.value) : null;
+        const curWeight = wtInp?.value.trim() !== '' ? parseFloat(wtInp.value)  : null;
+        if ((log.reps   != null && curReps   != null && curReps   > log.reps) ||
+            (log.weight != null && curWeight != null && curWeight > log.weight)) {
+            isPR = true;
+        }
+    });
     star.classList.toggle('visible', isPR);
 }
 
@@ -2538,10 +2542,9 @@ function renderExercises(idx) {
                 <thead><tr>
                     <th>Sarja</th>
                     <th>Toistot</th>
-                    <th class="prev-col-header">Aiempi tulos</th>
+                    <th class="prev-col-header">Ennätys</th>
                     <th>Paino (kg)</th>
-                    <th class="prev-col-header">Aiempi tulos</th>
-                    <th class="pr-col"></th>
+                    <th class="prev-col-header">Ennätys</th>
                 </tr></thead>
                 <tbody>${ex.sets.map((s, si) => {
                     const log = lastLogs[`${ex.name}-${si}`];
@@ -2557,7 +2560,6 @@ function renderExercises(idx) {
                             placeholder="kg"
                             data-ei="${i}" data-si="${si}" data-type="weight" data-ename="${escapeHtml(ex.name)}"></td>
                         <td class="prev-col">${prevWeight}</td>
-                        <td class="pr-col"><span class="pr-star" id="pr-${i}-${si}">⭐</span></td>
                     </tr>`;
                 }).join('')}</tbody>
                </table>`
@@ -2575,14 +2577,14 @@ function renderExercises(idx) {
             return `S${si + 1}: ${p.join(' · ')}`;
         }).filter(Boolean);
         const prevSummaryHtml = token && prevParts.length
-            ? `<div class="exercise-prev-summary">Viimeksi: ${prevParts.join('&ensp;·&ensp;')}</div>`
+            ? `<div class="exercise-prev-summary">Ennätys: ${prevParts.join('&ensp;·&ensp;')}</div>`
             : '';
 
         const slide = document.createElement('div');
         slide.className = 'exercise-slide';
         slide.innerHTML = `
             <div class="exercise-slide-card${done ? ' completed' : ''}" data-ex="${i}">
-                <div class="exercise-slide-name">${ex.name}</div>
+                <div class="exercise-slide-name">${ex.name}<span class="pr-star" id="pr-${i}">⭐</span></div>
                 ${prevSummaryHtml}
                 <div class="exercise-meta">
                     <span class="badge primary">${ex.muscles.split(',')[0].trim()}</span>

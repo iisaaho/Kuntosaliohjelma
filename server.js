@@ -130,15 +130,22 @@ app.get('/api/logs/last', requireAuth, async (req, res) => {
     const rows = await db.collection('workout_sets').find({
       user_id: req.user.id,
       exercise_name: { $in: nameList },
-    }).sort({ date: -1 }).toArray();
+    }).toArray();
 
-    const latest = new Map();
+    // Return all-time best (max weight, max reps) per (exercise_name, set_index)
+    const best = new Map();
     for (const row of rows) {
       if (!row.exercise_name) continue;
       const key = `${row.exercise_name}-${row.set_index}`;
-      if (!latest.has(key)) latest.set(key, row);
+      if (!best.has(key)) {
+        best.set(key, { exercise_name: row.exercise_name, set_index: row.set_index, weight: null, reps: null, date: row.date });
+      }
+      const b = best.get(key);
+      if (row.weight != null && (b.weight == null || row.weight > b.weight)) b.weight = row.weight;
+      if (row.reps   != null && (b.reps   == null || row.reps   > b.reps))   b.reps   = row.reps;
+      if (row.date && (!b.date || row.date > b.date)) b.date = row.date;
     }
-    res.json([...latest.values()]);
+    res.json([...best.values()]);
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: 'Palvelinvirhe' });
