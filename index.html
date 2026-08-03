@@ -893,10 +893,12 @@
         .cal-detail-exercises li {
             font-size: 0.9rem;
             color: var(--text);
-            padding: 0.45rem 0.75rem;
+            padding: 0.55rem 0.75rem;
             background: var(--surface2);
             border-radius: 8px;
         }
+        .cal-ex-name { font-weight: 600; margin-bottom: 0.2rem; }
+        .cal-set-row { font-size: 0.82rem; color: var(--text-muted); line-height: 1.6; }
         .cal-detail-close {
             width: 100%;
             margin-top: 1.25rem;
@@ -1830,23 +1832,55 @@ function buildCalendarHTML(year, month) {
         </div>`;
 }
 
-function openCalDetail(dateStr) {
+async function openCalDetail(dateStr) {
     const info = _calDateInfo[dateStr];
     if (!info) return;
 
-    if (!info.split) return;
-    const [progKey, splitNum] = info.split.split(/-(?=\d+$)/);
-    const prog = programs[progKey];
-    const day = prog?.splits?.[Number(splitNum)]?.[info.day_index];
-    if (!day) return;
+    const [progKey, splitNum] = info.split ? info.split.split(/-(?=\d+$)/) : [];
+    const prog = progKey ? programs[progKey] : null;
+    const day = prog?.splits?.[Number(splitNum)]?.[info.day_index] ?? null;
 
     const [y, m, d] = dateStr.split('-');
     const monthNames = ['tammikuuta','helmikuuta','maaliskuuta','huhtikuuta','toukokuuta','kesäkuuta','heinäkuuta','elokuuta','syyskuuta','lokakuuta','marraskuuta','joulukuuta'];
     document.getElementById('cal-detail-date').textContent = `${parseInt(d)}. ${monthNames[parseInt(m)-1]} ${y}`;
-    document.getElementById('cal-detail-title').textContent = `${prog.label} · ${day.nimi}`;
-    document.getElementById('cal-detail-exercises').innerHTML = day.harjoitukset
-        .map(ex => `<li>${ex.name}</li>`).join('');
+    document.getElementById('cal-detail-title').textContent = day ? `${prog.label} · ${day.nimi}` : '';
+    document.getElementById('cal-detail-exercises').innerHTML = `<li style="color:var(--text-muted);background:none">Ladataan…</li>`;
     document.getElementById('cal-detail-overlay').classList.add('open');
+
+    try {
+        const res = await fetch(`/api/logs/date?date=${dateStr}`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) { document.getElementById('cal-detail-exercises').innerHTML = `<li>Tietoja ei saatavilla</li>`; return; }
+        const sets = await res.json();
+
+        const exMap = new Map();
+        for (const s of sets) {
+            if (s.weight == null && s.reps == null) continue;
+            if (!exMap.has(s.exercise_index)) {
+                const name = s.exercise_name || day?.harjoitukset?.[s.exercise_index]?.name || `Liike ${s.exercise_index + 1}`;
+                exMap.set(s.exercise_index, { name, sets: [] });
+            }
+            exMap.get(s.exercise_index).sets.push(s);
+        }
+
+        if (!exMap.size) {
+            document.getElementById('cal-detail-exercises').innerHTML = `<li style="color:var(--text-muted);background:none">Ei kirjattuja tuloksia</li>`;
+            return;
+        }
+
+        document.getElementById('cal-detail-exercises').innerHTML = [...exMap.values()].map(ex => {
+            const rows = ex.sets.map(s => {
+                const parts = [];
+                if (s.reps != null) parts.push(`${s.reps} toistoa`);
+                if (s.weight != null) parts.push(`${s.weight} kg`);
+                return `<div class="cal-set-row">S${s.set_index + 1}: ${parts.join(' · ')}</div>`;
+            }).join('');
+            return `<li><div class="cal-ex-name">${escapeHtml(ex.name)}</div>${rows}</li>`;
+        }).join('');
+    } catch {
+        document.getElementById('cal-detail-exercises').innerHTML = `<li>Yhteysvirhe</li>`;
+    }
 }
 
 function closeCalDetailBtn() {

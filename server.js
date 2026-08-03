@@ -261,6 +261,24 @@ app.post('/api/comments', requireAuth, async (req, res) => {
   }
 });
 
+// ── Workout sets for a specific date ──────────────────────────────────────────
+
+app.get('/api/logs/date', requireAuth, async (req, res) => {
+  try {
+    const { date } = req.query;
+    if (!date) return res.json([]);
+    const db = await getDB();
+    const sets = await db.collection('workout_sets').find({
+      user_id: req.user.id,
+      date: String(date),
+    }).sort({ exercise_index: 1, set_index: 1 }).toArray();
+    res.json(sets);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Palvelinvirhe' });
+  }
+});
+
 // ── Workout dates for calendar ─────────────────────────────────────────────────
 
 app.get('/api/logs/dates', requireAuth, async (req, res) => {
