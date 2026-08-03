@@ -2077,11 +2077,11 @@ async function renderStep3(idx) {
     currentStep = 3;
     currentDay = idx;
     updateStepIndicator();
-    if (token) await Promise.all([loadLastLogs(), loadLastComments()]);
 
-    const main = document.getElementById('main-content');
     const days = programs[selectedProgram].splits[selectedSplit];
     const day = days[idx];
+
+    if (token) await Promise.all([loadLastLogs(day.harjoitukset.map(ex => ex.name)), loadLastComments()]);
     if (!completed[idx]) completed[idx] = new Set();
     const p = programs[selectedProgram];
 
@@ -2244,16 +2244,18 @@ function splitKey() {
     return `${selectedProgram}-${selectedSplit}`;
 }
 
-async function loadLastLogs() {
+async function loadLastLogs(exerciseNames = []) {
     if (!token) { lastLogs = {}; return; }
     try {
-        const res = await fetch(`/api/logs/last?split=${splitKey()}&day_index=${currentDay}`, {
+        const names = exerciseNames.map(n => encodeURIComponent(n)).join(',');
+        const res = await fetch(`/api/logs/last?names=${names}`, {
             headers: { Authorization: `Bearer ${token}` },
         });
         if (res.status === 401) { logout(); return; }
+        if (!res.ok) { lastLogs = {}; return; }
         const rows = await res.json();
         lastLogs = {};
-        rows.forEach(r => { lastLogs[`${r.exercise_index}-${r.set_index}`] = r; });
+        rows.forEach(r => { if (r.exercise_name) lastLogs[`${r.exercise_name}-${r.set_index}`] = r; });
     } catch {
         lastLogs = {};
     }
@@ -2290,7 +2292,7 @@ function collectSets() {
     const map = new Map();
     document.querySelectorAll('.set-input').forEach(inp => {
         const key = `${inp.dataset.ei}-${inp.dataset.si}`;
-        if (!map.has(key)) map.set(key, { exercise_index: +inp.dataset.ei, set_index: +inp.dataset.si, weight: null, reps: null });
+        if (!map.has(key)) map.set(key, { exercise_index: +inp.dataset.ei, set_index: +inp.dataset.si, exercise_name: inp.dataset.ename || null, weight: null, reps: null });
         const raw = parseFloat(inp.value);
         const val = inp.value.trim() !== '' && !isNaN(raw) ? raw : null;
         const entry = map.get(key);
@@ -2446,7 +2448,7 @@ function renderExercises(idx) {
 
         let lastDate = null;
         for (let si = 0; si < ex.sets.length; si++) {
-            const log = lastLogs[`${i}-${si}`];
+            const log = lastLogs[`${ex.name}-${si}`];
             if (log?.date) { lastDate = log.date; break; }
         }
 
@@ -2460,18 +2462,18 @@ function renderExercises(idx) {
                     <th class="prev-col-header">Aiempi tulos</th>
                 </tr></thead>
                 <tbody>${ex.sets.map((s, si) => {
-                    const log = lastLogs[`${i}-${si}`];
+                    const log = lastLogs[`${ex.name}-${si}`];
                     const prevReps   = log?.reps   != null ? log.reps   : '<span style="color:var(--border)">—</span>';
                     const prevWeight = log?.weight  != null ? `${log.weight} kg` : '<span style="color:var(--border)">—</span>';
                     return `<tr>
                         <td>${s.sarja}</td>
                         <td><input class="set-input" inputmode="numeric" type="text"
                             placeholder="${s.toistot}"
-                            data-ei="${i}" data-si="${si}" data-type="reps"></td>
+                            data-ei="${i}" data-si="${si}" data-type="reps" data-ename="${escapeHtml(ex.name)}"></td>
                         <td class="prev-col">${prevReps}</td>
                         <td><input class="set-input" inputmode="decimal" type="number" min="0" max="9999" step="0.5"
                             placeholder="kg"
-                            data-ei="${i}" data-si="${si}" data-type="weight"></td>
+                            data-ei="${i}" data-si="${si}" data-type="weight" data-ename="${escapeHtml(ex.name)}"></td>
                         <td class="prev-col">${prevWeight}</td>
                     </tr>`;
                 }).join('')}</tbody>

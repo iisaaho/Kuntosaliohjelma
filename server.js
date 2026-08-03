@@ -121,18 +121,21 @@ app.post('/api/login', rateLimit(10, 15 * 60 * 1000), async (req, res) => {
 
 app.get('/api/logs/last', requireAuth, async (req, res) => {
   try {
-    const { split, day_index } = req.query;
+    const { names } = req.query;
     const db = await getDB();
+
+    const nameList = String(names || '').split(',').map(n => n.trim()).filter(Boolean);
+    if (!nameList.length) return res.json([]);
 
     const rows = await db.collection('workout_sets').find({
       user_id: req.user.id,
-      split: String(split),
-      day_index: Number(day_index),
+      exercise_name: { $in: nameList },
     }).sort({ date: -1 }).toArray();
 
     const latest = new Map();
     for (const row of rows) {
-      const key = `${row.exercise_index}-${row.set_index}`;
+      if (!row.exercise_name) continue;
+      const key = `${row.exercise_name}-${row.set_index}`;
       if (!latest.has(key)) latest.set(key, row);
     }
     res.json([...latest.values()]);
@@ -161,6 +164,7 @@ app.post('/api/logs', requireAuth, async (req, res) => {
       };
       const entry = {
         ...filter,
+        exercise_name: s.exercise_name || null,
         weight: s.weight != null ? Number(s.weight) : null,
         reps: s.reps != null ? Number(s.reps) : null,
       };
