@@ -1033,6 +1033,21 @@
 
         .success-close-btn:hover { background: #047857; }
 
+        .success-pr {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #b45309;
+            background: #fef3c7;
+            border-radius: 10px;
+            padding: 0.55rem 1rem;
+            margin-bottom: 1.5rem;
+            letter-spacing: 0.01em;
+        }
+
+        .pr-col { width: 1.6rem; text-align: center; padding: 0 !important; }
+        .pr-star { display: none; font-size: 1rem; line-height: 1; }
+        .pr-star.visible { display: inline; }
+
         /* ── Modal ── */
         .modal-overlay {
             display: none;
@@ -1229,6 +1244,7 @@
         <div class="success-icon">✓</div>
         <div class="success-title" id="success-title">Hienoa!</div>
         <div class="success-subtitle" id="success-subtitle">Treeni on tallennettu.</div>
+        <div class="success-pr" id="success-pr" style="display:none"></div>
         <button class="success-close-btn" onclick="closeSuccessOverlay()">Sulje</button>
     </div>
 </div>
@@ -2323,6 +2339,26 @@ async function saveComment(textarea) {
     } catch { /* ignore */ }
 }
 
+function updatePR(inp) {
+    const ei = inp.dataset.ei;
+    const si = inp.dataset.si;
+    const exName = inp.dataset.ename;
+    const log = lastLogs[`${exName}-${si}`];
+    const star = document.getElementById(`pr-${ei}-${si}`);
+    if (!star || !log) return;
+    const repInp = document.querySelector(`.set-input[data-ei="${ei}"][data-si="${si}"][data-type="reps"]`);
+    const wtInp  = document.querySelector(`.set-input[data-ei="${ei}"][data-si="${si}"][data-type="weight"]`);
+    const curReps   = repInp?.value.trim() !== '' ? parseFloat(repInp.value) : null;
+    const curWeight = wtInp?.value.trim()  !== '' ? parseFloat(wtInp.value)  : null;
+    const isPR = (log.reps   != null && curReps   != null && curReps   > log.reps)
+              || (log.weight != null && curWeight != null && curWeight > log.weight);
+    star.classList.toggle('visible', isPR);
+}
+
+function countPRs() {
+    return document.querySelectorAll('.pr-star.visible').length;
+}
+
 function collectSets() {
     const map = new Map();
     document.querySelectorAll('.set-input').forEach(inp => {
@@ -2370,8 +2406,9 @@ async function saveLogs(finish = false, silent = false) {
         if (res.ok) {
             await loadLastLogs();
             if (finish) {
+                const prCount = countPRs();
                 renderHome();
-                showSuccessOverlay();
+                showSuccessOverlay(prCount);
             } else if (!silent) {
                 showToast('Tulokset tallennettu!', 'success');
             }
@@ -2445,7 +2482,7 @@ const successMessages = [
 ];
 
 let _lastSuccessIdx = -1;
-function showSuccessOverlay() {
+function showSuccessOverlay(prCount = 0) {
     let idx;
     do { idx = Math.floor(Math.random() * successMessages.length); }
     while (idx === _lastSuccessIdx && successMessages.length > 1);
@@ -2453,6 +2490,15 @@ function showSuccessOverlay() {
     const msg = successMessages[idx];
     document.getElementById('success-title').textContent = msg.title;
     document.getElementById('success-subtitle').textContent = msg.sub;
+    const prEl = document.getElementById('success-pr');
+    if (prEl) {
+        if (prCount > 0) {
+            prEl.textContent = `Uudet ennätykset ${'⭐'.repeat(prCount)}`;
+            prEl.style.display = '';
+        } else {
+            prEl.style.display = 'none';
+        }
+    }
     document.getElementById('success-overlay').classList.add('open');
 }
 
@@ -2495,6 +2541,7 @@ function renderExercises(idx) {
                     <th class="prev-col-header">Aiempi tulos</th>
                     <th>Paino (kg)</th>
                     <th class="prev-col-header">Aiempi tulos</th>
+                    <th class="pr-col"></th>
                 </tr></thead>
                 <tbody>${ex.sets.map((s, si) => {
                     const log = lastLogs[`${ex.name}-${si}`];
@@ -2510,6 +2557,7 @@ function renderExercises(idx) {
                             placeholder="kg"
                             data-ei="${i}" data-si="${si}" data-type="weight" data-ename="${escapeHtml(ex.name)}"></td>
                         <td class="prev-col">${prevWeight}</td>
+                        <td class="pr-col"><span class="pr-star" id="pr-${i}-${si}">⭐</span></td>
                     </tr>`;
                 }).join('')}</tbody>
                </table>`
@@ -2567,6 +2615,7 @@ function renderExercises(idx) {
     document.querySelectorAll('.set-input').forEach(inp => {
         inp.addEventListener('input', () => {
             autoMarkComplete(inp, idx);
+            updatePR(inp);
             if (token) scheduleAutoSave();
         });
     });
