@@ -643,6 +643,7 @@
             line-height: 1.25;
         }
 
+        .exercise-prev-summary { font-size: 0.78rem; color: var(--text-muted); margin: 0.15rem 0 0.75rem; line-height: 1.6; }
         .exercise-meta { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
 
         .badge {
@@ -2517,11 +2518,24 @@ function renderExercises(idx) {
                 <tbody>${ex.sets.map(s => `<tr><td>${s.sarja}</td><td>${s.toistot}</td><td></td></tr>`).join('')}</tbody>
                </table>`;
 
+        const prevParts = ex.sets.map((s, si) => {
+            const log = lastLogs[`${ex.name}-${si}`];
+            if (!log || (log.weight == null && log.reps == null)) return null;
+            const p = [];
+            if (log.reps != null) p.push(`${log.reps} toistoa`);
+            if (log.weight != null) p.push(`${log.weight} kg`);
+            return `S${si + 1}: ${p.join(' · ')}`;
+        }).filter(Boolean);
+        const prevSummaryHtml = token && prevParts.length
+            ? `<div class="exercise-prev-summary">Viimeksi: ${prevParts.join('&ensp;·&ensp;')}</div>`
+            : '';
+
         const slide = document.createElement('div');
         slide.className = 'exercise-slide';
         slide.innerHTML = `
             <div class="exercise-slide-card${done ? ' completed' : ''}" data-ex="${i}">
                 <div class="exercise-slide-name">${ex.name}</div>
+                ${prevSummaryHtml}
                 <div class="exercise-meta">
                     <span class="badge primary">${ex.muscles.split(',')[0].trim()}</span>
                     <span class="badge">${ex.sets.length} sarjaa</span>
