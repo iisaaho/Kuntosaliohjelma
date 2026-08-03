@@ -2351,8 +2351,8 @@ function updatePR(inp) {
         const wtInp = document.querySelector(`.set-input[data-ei="${ei}"][data-si="${si}"][data-type="weight"]`);
         const curReps   = repInp.value.trim() !== '' ? parseFloat(repInp.value) : null;
         const curWeight = wtInp?.value.trim() !== '' ? parseFloat(wtInp.value)  : null;
-        if ((log.reps   != null && curReps   != null && curReps   > log.reps) ||
-            (log.weight != null && curWeight != null && curWeight > log.weight)) {
+        if ((log.best_reps   != null && curReps   != null && curReps   > log.best_reps) ||
+            (log.best_weight != null && curWeight != null && curWeight > log.best_weight)) {
             isPR = true;
         }
     });
@@ -2542,14 +2542,14 @@ function renderExercises(idx) {
                 <thead><tr>
                     <th>Sarja</th>
                     <th>Toistot</th>
-                    <th class="prev-col-header">Ennätys</th>
+                    <th class="prev-col-header">Aiempi tulos</th>
                     <th>Paino (kg)</th>
-                    <th class="prev-col-header">Ennätys</th>
+                    <th class="prev-col-header">Aiempi tulos</th>
                 </tr></thead>
                 <tbody>${ex.sets.map((s, si) => {
                     const log = lastLogs[`${ex.name}-${si}`];
-                    const prevReps   = log?.reps   != null ? log.reps   : '<span style="color:var(--border)">—</span>';
-                    const prevWeight = log?.weight  != null ? `${log.weight} kg` : '<span style="color:var(--border)">—</span>';
+                    const prevReps   = log?.last_reps   != null ? log.last_reps   : '<span style="color:var(--border)">—</span>';
+                    const prevWeight = log?.last_weight != null ? `${log.last_weight} kg` : '<span style="color:var(--border)">—</span>';
                     return `<tr>
                         <td>${s.sarja}</td>
                         <td><input class="set-input" inputmode="numeric" type="text"
@@ -2570,10 +2570,10 @@ function renderExercises(idx) {
 
         const prevParts = ex.sets.map((s, si) => {
             const log = lastLogs[`${ex.name}-${si}`];
-            if (!log || (log.weight == null && log.reps == null)) return null;
+            if (!log || (log.best_weight == null && log.best_reps == null)) return null;
             const p = [];
-            if (log.reps != null) p.push(`${log.reps} toistoa`);
-            if (log.weight != null) p.push(`${log.weight} kg`);
+            if (log.best_reps   != null) p.push(`${log.best_reps} toistoa`);
+            if (log.best_weight != null) p.push(`${log.best_weight} kg`);
             return `S${si + 1}: ${p.join(' · ')}`;
         }).filter(Boolean);
         const prevSummaryHtml = token && prevParts.length

@@ -130,22 +130,31 @@ app.get('/api/logs/last', requireAuth, async (req, res) => {
     const rows = await db.collection('workout_sets').find({
       user_id: req.user.id,
       exercise_name: { $in: nameList },
-    }).toArray();
+    }).sort({ date: -1 }).toArray();
 
-    // Return all-time best (max weight, max reps) per (exercise_name, set_index)
-    const best = new Map();
+    // Per (exercise_name, set_index): latest result for display + all-time best for PR comparison
+    const map = new Map();
     for (const row of rows) {
       if (!row.exercise_name) continue;
       const key = `${row.exercise_name}-${row.set_index}`;
-      if (!best.has(key)) {
-        best.set(key, { exercise_name: row.exercise_name, set_index: row.set_index, weight: null, reps: null, date: row.date });
+      if (!map.has(key)) {
+        // First row (date desc) = most recent
+        map.set(key, {
+          exercise_name: row.exercise_name,
+          set_index: row.set_index,
+          date: row.date,
+          last_weight: row.weight,
+          last_reps: row.reps,
+          best_weight: row.weight,
+          best_reps: row.reps,
+        });
+      } else {
+        const b = map.get(key);
+        if (row.weight != null && (b.best_weight == null || row.weight > b.best_weight)) b.best_weight = row.weight;
+        if (row.reps   != null && (b.best_reps   == null || row.reps   > b.best_reps))   b.best_reps   = row.reps;
       }
-      const b = best.get(key);
-      if (row.weight != null && (b.weight == null || row.weight > b.weight)) b.weight = row.weight;
-      if (row.reps   != null && (b.reps   == null || row.reps   > b.reps))   b.reps   = row.reps;
-      if (row.date && (!b.date || row.date > b.date)) b.date = row.date;
     }
-    res.json([...best.values()]);
+    res.json([...map.values()]);
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: 'Palvelinvirhe' });
