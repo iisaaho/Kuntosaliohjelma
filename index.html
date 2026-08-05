@@ -2128,6 +2128,7 @@ async function renderStep3(idx) {
     currentDay = idx;
     updateStepIndicator();
 
+    const main = document.getElementById('main-content');
     const days = programs[selectedProgram].splits[selectedSplit];
     const day = days[idx];
 
